@@ -234,3 +234,21 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,java,intellij,windows,visualstudiocode,react
+
+# Spring Boot / Gradle
+HELP.md
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Local IDE project files
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.factorypath
+.apt_generated/
+bin/
