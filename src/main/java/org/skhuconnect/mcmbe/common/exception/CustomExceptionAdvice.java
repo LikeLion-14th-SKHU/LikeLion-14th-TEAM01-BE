@@ -1,6 +1,7 @@
 package org.skhuconnect.mcmbe.common.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import jakarta.validation.ConstraintViolationException;
 import org.skhuconnect.mcmbe.common.response.ApiResTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -36,6 +37,15 @@ public class CustomExceptionAdvice {
         ErrorCode errorCode = ErrorCode.INVALID_INPUT_VALUE;
         return ResponseEntity.status(errorCode.getHttpStatus())
                 .body(ApiResTemplate.error(errorCode, errors));
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResTemplate<Void>> handleConstraintViolation(
+            ConstraintViolationException exception
+    ) {
+        ErrorCode errorCode = ErrorCode.INVALID_INPUT_VALUE;
+        return ResponseEntity.status(errorCode.getHttpStatus())
+                .body(ApiResTemplate.error(errorCode));
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
