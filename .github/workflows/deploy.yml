@@ -48,15 +48,18 @@ jobs:
 
       - name: Deploy
         run: |
-          ssh -i ~/.ssh/mcm-server.pem \
+          ssh \
+            -o BatchMode=yes \
+            -o ConnectTimeout=10 \
+            -i ~/.ssh/mcm-server.pem \
             "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" << 'EOF'
               set -e
-
+          
               mv /home/ubuntu/app/mcm-be-new.jar /home/ubuntu/app/mcm-be.jar
-
-              sudo systemctl restart mcm-be
-
+          
+              sudo -n /usr/bin/systemctl restart mcm-be
+          
               sleep 15
-
-              sudo systemctl status mcm-be --no-pager
+          
+              sudo -n /usr/bin/systemctl status mcm-be
           EOF
