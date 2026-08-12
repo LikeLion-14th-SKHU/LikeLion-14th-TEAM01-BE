@@ -23,7 +23,7 @@ import java.net.URI;
 
 @Tag(
         name = "Kakao & JWT API",
-        description = "카카오 로그인 및 JWT 인증 관련 API"
+        description = "카카오 로그인 및 JWT 인증 관련 API이다."
 )
 @Validated
 @RestController
