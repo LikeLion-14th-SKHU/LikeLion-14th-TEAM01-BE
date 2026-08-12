@@ -1,0 +1,62 @@
+name: Deploy MCM Backend
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Grant execute permission
+        run: chmod +x gradlew
+
+      - name: Run tests
+        run: ./gradlew test
+
+      - name: Build JAR
+        run: ./gradlew bootJar
+
+      - name: Prepare SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/mcm-server.pem
+          chmod 600 ~/.ssh/mcm-server.pem
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Upload JAR
+        run: |
+          JAR_FILE=$(find build/libs -name '*.jar' ! -name '*-plain.jar' | head -n 1)
+
+          scp -i ~/.ssh/mcm-server.pem \
+            "$JAR_FILE" \
+            "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/ubuntu/app/mcm-be-new.jar"
+
+      - name: Deploy
+        run: |
+          ssh -i ~/.ssh/mcm-server.pem \
+            "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" << 'EOF'
+              set -e
+
+              mv /home/ubuntu/app/mcm-be-new.jar /home/ubuntu/app/mcm-be.jar
+
+              sudo systemctl restart mcm-be
+
+              sleep 15
+
+              sudo systemctl status mcm-be --no-pager
+          EOF
