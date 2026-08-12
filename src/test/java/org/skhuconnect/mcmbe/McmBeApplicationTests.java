@@ -6,6 +6,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -20,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "spring.jpa.hibernate.ddl-auto=create-drop",
         "auth.kakao.client-id=test-client-id",
         "auth.kakao.client-secret=",
-        "auth.kakao.redirect-uri=http://localhost/callback",
+        "auth.kakao.redirect-uri=http://localhost:8080/detective/auth/kakao/callback",
         "auth.jwt.secret=MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=",
         "auth.jwt.access-token-expiration=1800000",
         "auth.jwt.refresh-token-expiration=1209600000"
@@ -37,12 +38,36 @@ class McmBeApplicationTests {
 
     @Test
     void protectedRequestIsStatelessAndDoesNotCreateSessionCookie() throws Exception {
-        mockMvc.perform(get("/api/v1/protected"))
+        mockMvc.perform(get("/detective/protected"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(header().doesNotExist("Set-Cookie"))
                 .andExpect(content().contentType("application/json;charset=UTF-8"))
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+    }
+
+    @Test
+    void kakaoLoginRedirectsWithoutCreatingSession() throws Exception {
+        mockMvc.perform(get("/detective/auth/kakao/login"))
+                .andExpect(status().isFound())
+                .andExpect(header().string("Location", containsString(
+                        "https://kauth.kakao.com/oauth/authorize"
+                )))
+                .andExpect(header().string("Location", containsString(
+                        "redirect_uri=http://localhost:8080/detective/auth/kakao/callback"
+                )))
+                .andExpect(header().string("Location", containsString("state=")))
+                .andExpect(header().doesNotExist("Set-Cookie"));
+    }
+
+    @Test
+    void swaggerDocumentsDetectiveAuthPaths() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paths['/detective/auth/kakao/login']").exists())
+                .andExpect(jsonPath("$.paths['/detective/auth/kakao/callback']").exists())
+                .andExpect(jsonPath("$.paths['/detective/auth/refresh']").exists())
+                .andExpect(jsonPath("$.paths['/detective/auth/kakao/authorization-url']").doesNotExist());
     }
 
 }
