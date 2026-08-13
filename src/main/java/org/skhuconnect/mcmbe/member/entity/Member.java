@@ -45,6 +45,9 @@ public class Member {
     @Column(name = "profile_image_url", length = 500)
     private String profileImageUrl;
 
+    @Column(name = "designer_name", length = 100)
+    private String designerName;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private MemberRole role;
@@ -77,5 +80,9 @@ public class Member {
         this.email = email;
         this.nickname = nickname;
         this.profileImageUrl = profileImageUrl;
+    }
+
+    public void setDesignerName(String designerName) {
+        this.designerName = designerName;
     }
 }
