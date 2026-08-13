@@ -17,6 +17,8 @@ public enum ErrorCode implements ResponseCode {
     DESIGN_DIRECTION_ALREADY_SELECTED(HttpStatus.CONFLICT, "DESIGN_DIRECTION_ALREADY_SELECTED", "디자인 방향은 최초 1회만 선택할 수 있습니다."),
     DESIGN_DIRECTION_REQUIRED(HttpStatus.CONFLICT, "DESIGN_DIRECTION_REQUIRED", "사건 선택 전에 디자인 방향을 선택해야 합니다."),
     GAME_ALREADY_STARTED(HttpStatus.CONFLICT, "GAME_ALREADY_STARTED", "게임은 최초 1회만 시작할 수 있습니다."),
+    GAME_NOT_IN_PROGRESS(HttpStatus.CONFLICT, "GAME_NOT_IN_PROGRESS", "진행 중인 사건이 없습니다."),
+    CHARACTER_NOT_AVAILABLE_FOR_CURRENT_CASE(HttpStatus.FORBIDDEN, "CHARACTER_NOT_AVAILABLE_FOR_CURRENT_CASE", "현재 사건에 속하지 않은 캐릭터입니다."),
     KAKAO_LOGIN_FAILED(HttpStatus.BAD_GATEWAY, "KAKAO_LOGIN_FAILED", "카카오 로그인 처리에 실패했습니다."),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "INVALID_TOKEN", "유효하지 않은 인증 토큰입니다."),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "EXPIRED_TOKEN", "만료된 인증 토큰입니다."),
