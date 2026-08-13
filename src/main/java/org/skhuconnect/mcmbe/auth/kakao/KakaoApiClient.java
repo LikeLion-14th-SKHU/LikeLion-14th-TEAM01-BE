@@ -5,6 +5,8 @@ import org.skhuconnect.mcmbe.common.exception.BusinessException;
 import org.skhuconnect.mcmbe.common.exception.ErrorCode;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -22,9 +24,18 @@ public class KakaoApiClient {
     private final AuthProperties.Kakao properties;
     private final RestClient restClient;
 
-    public KakaoApiClient(AuthProperties authProperties) {
+    public KakaoApiClient(
+            AuthProperties authProperties,
+            @Value("${KAKAO_CONNECT_TIMEOUT:3s}") java.time.Duration connectTimeout,
+            @Value("${KAKAO_READ_TIMEOUT:5s}") java.time.Duration readTimeout
+    ) {
         this.properties = authProperties.kakao();
-        this.restClient = RestClient.create();
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(connectTimeout);
+        requestFactory.setReadTimeout(readTimeout);
+        this.restClient = RestClient.builder()
+                .requestFactory(requestFactory)
+                .build();
     }
 
     public String buildAuthorizationUrl(String state) {

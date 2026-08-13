@@ -64,7 +64,7 @@ public class AuthController {
 
     @Operation(
             summary = "JWT 재발급",
-            description = "Refresh Token을 검증하고 새로운 Access Token과 Refresh Token을 발급합니다."
+            description = "저장된 Refresh Token을 검증한 뒤 기존 토큰을 폐기하고 새로운 Access Token과 Refresh Token을 발급합니다. 이전 Refresh Token은 재사용할 수 없습니다."
     )
     @PostMapping("/refresh")
     public ResponseEntity<ApiResTemplate<TokenResponse>> refresh(

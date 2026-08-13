@@ -45,6 +45,13 @@ class JwtTokenProviderTest {
     }
 
     @Test
+    void issuedRefreshTokensAreUnique() {
+        TokenResponse first = jwtTokenProvider.issueTokens(member);
+        TokenResponse second = jwtTokenProvider.issueTokens(member);
+
+        assertThat(second.refreshToken()).isNotEqualTo(first.refreshToken());
+    }
+    @Test
     void refreshTokenCannotBeUsedAsAccessToken() {
         TokenResponse tokens = jwtTokenProvider.issueTokens(member);
 
