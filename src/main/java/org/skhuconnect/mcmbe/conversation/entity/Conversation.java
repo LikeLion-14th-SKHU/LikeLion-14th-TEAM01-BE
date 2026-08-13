@@ -69,6 +69,30 @@ public class Conversation {
         return new Conversation(gameProgress, characterType);
     }
 
+    public boolean canAskQuestion() {
+        return status != ConversationStatus.COMPLETED
+                && questionCount < MAX_QUESTION_COUNT;
+    }
+
+    public void recordCompletedQuestion() {
+        if (!canAskQuestion()) {
+            throw new IllegalStateException("질문 가능 횟수를 초과했습니다.");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (startedAt == null) {
+            startedAt = now;
+        }
+
+        questionCount++;
+        if (questionCount == MAX_QUESTION_COUNT) {
+            status = ConversationStatus.COMPLETED;
+            completedAt = now;
+            return;
+        }
+        status = ConversationStatus.IN_PROGRESS;
+    }
+
     public int getRemainingQuestionCount() {
         return MAX_QUESTION_COUNT - questionCount;
     }
