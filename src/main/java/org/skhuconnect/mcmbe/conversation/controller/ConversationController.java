@@ -64,7 +64,7 @@ public class ConversationController {
             @ApiResponse(responseCode = "401", description = "인증 토큰 오류 (UNAUTHORIZED, INVALID_TOKEN, EXPIRED_TOKEN)"),
             @ApiResponse(responseCode = "403", description = "현재 사건에 속하지 않은 캐릭터 (CHARACTER_NOT_AVAILABLE_FOR_CURRENT_CASE)"),
             @ApiResponse(responseCode = "409", description = "게임 미진행 또는 질문 3회 소진 (GAME_NOT_IN_PROGRESS, QUESTION_LIMIT_EXCEEDED)"),
-            @ApiResponse(responseCode = "502", description = "OpenAI 설정 누락·호출 실패·빈 응답. 질문 횟수와 메시지는 변경되지 않음 (AI_SERVICE_UNAVAILABLE)")
+            @ApiResponse(responseCode = "502", description = "AI 서버 설정 누락·호출 실패·빈 응답. 질문 횟수와 메시지는 변경되지 않음 (AI_SERVICE_UNAVAILABLE)")
     })
     @PostMapping("/{characterType}/messages")
     public ResponseEntity<ApiResTemplate<ConversationResponse>> ask(

@@ -1,6 +1,5 @@
 package org.skhuconnect.mcmbe.conversation.service;
 
-import org.skhuconnect.mcmbe.ai.client.AiConversationMessage;
 import org.skhuconnect.mcmbe.ai.client.SuspectAiClient;
 import org.skhuconnect.mcmbe.common.exception.BusinessException;
 import org.skhuconnect.mcmbe.common.exception.ErrorCode;
@@ -63,15 +62,8 @@ public class ConversationCommandService {
 
         List<ConversationMessage> existingMessages = conversationMessageRepository
                 .findAllByConversationIdOrderBySequenceNumberAsc(conversation.getId());
-        List<AiConversationMessage> context = existingMessages.stream()
-                .map(message -> new AiConversationMessage(
-                        message.getSenderType() == MessageSenderType.USER ? "user" : "assistant",
-                        message.getContent()
-                ))
-                .toList();
-
         String question = request.content().trim();
-        String answer = suspectAiClient.answer(characterType, context, question);
+        String answer = suspectAiClient.answer(characterType, conversation.getId(), question);
         int nextSequenceNumber = existingMessages.isEmpty()
                 ? 1
                 : existingMessages.get(existingMessages.size() - 1).getSequenceNumber() + 1;
