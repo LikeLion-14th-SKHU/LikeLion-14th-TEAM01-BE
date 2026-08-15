@@ -16,6 +16,9 @@ springdoc:
   swagger-ui:
     enabled: ${SWAGGER_ENABLED:false}
 
+openapi:
+  server-url: ${OPENAPI_SERVER_URL}
+
 logging:
   level:
     org.hibernate.SQL: info
@@ -29,3 +32,6 @@ auth:
     secret: ${JWT_SECRET}
     access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION}
     refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION}
+
+server:
+  forward-headers-strategy: framework
