@@ -19,6 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "spring.datasource.password=",
         "spring.datasource.driver-class-name=org.h2.Driver",
         "spring.jpa.hibernate.ddl-auto=create-drop",
+        "openapi.server-url=https://mcm-api.i1000u.store",
         "auth.kakao.client-id=test-client-id",
         "auth.kakao.client-secret=",
         "auth.kakao.redirect-uri=http://localhost:8080/detective/auth/kakao/callback",
@@ -64,6 +65,8 @@ class McmBeApplicationTests {
     void swaggerDocumentsDetectiveAuthPaths() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.servers[0].url")
+                        .value("https://mcm-api.i1000u.store"))
                 .andExpect(jsonPath("$.paths['/detective/auth/kakao/login']").exists())
                 .andExpect(jsonPath("$.paths['/detective/auth/kakao/callback']").exists())
                 .andExpect(jsonPath("$.paths['/detective/auth/refresh']").exists())
