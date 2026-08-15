@@ -19,6 +19,8 @@ public enum ErrorCode implements ResponseCode {
     GAME_ALREADY_STARTED(HttpStatus.CONFLICT, "GAME_ALREADY_STARTED", "게임은 최초 1회만 시작할 수 있습니다."),
     GAME_NOT_IN_PROGRESS(HttpStatus.CONFLICT, "GAME_NOT_IN_PROGRESS", "진행 중인 사건이 없습니다."),
     CHARACTER_NOT_AVAILABLE_FOR_CURRENT_CASE(HttpStatus.FORBIDDEN, "CHARACTER_NOT_AVAILABLE_FOR_CURRENT_CASE", "현재 사건에 속하지 않은 캐릭터입니다."),
+    QUESTION_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "QUESTION_LIMIT_EXCEEDED", "해당 캐릭터에게 질문할 수 있는 3회를 모두 사용했습니다."),
+    AI_SERVICE_UNAVAILABLE(HttpStatus.BAD_GATEWAY, "AI_SERVICE_UNAVAILABLE", "AI 응답을 생성하지 못했습니다. 잠시 후 다시 시도해 주세요."),
     KAKAO_LOGIN_FAILED(HttpStatus.BAD_GATEWAY, "KAKAO_LOGIN_FAILED", "카카오 로그인 처리에 실패했습니다."),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "INVALID_TOKEN", "유효하지 않은 인증 토큰입니다."),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "EXPIRED_TOKEN", "만료된 인증 토큰입니다."),
