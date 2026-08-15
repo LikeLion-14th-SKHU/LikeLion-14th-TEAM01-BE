@@ -28,13 +28,13 @@ public class AiServerSuspectClient implements SuspectAiClient {
     }
 
     @Override
-    public String answer(CharacterType characterType, Long conversationId, String question) {
+    public String answer(CharacterType characterType, String aiSessionId, String question) {
         if (!properties.isConfigured()) {
             throw new BusinessException(ErrorCode.AI_SERVICE_UNAVAILABLE);
         }
 
         AiServerRequest request = new AiServerRequest(
-                "conversation-" + conversationId,
+                aiSessionId,
                 question
         );
 

@@ -6,7 +6,7 @@ public interface SuspectAiClient {
 
     String answer(
             CharacterType characterType,
-            Long conversationId,
+            String aiSessionId,
             String question
     );
 }

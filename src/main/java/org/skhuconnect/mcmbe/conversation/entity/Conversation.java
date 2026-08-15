@@ -18,15 +18,22 @@ import lombok.NoArgsConstructor;
 import org.skhuconnect.mcmbe.game.entity.GameProgress;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Entity
 @Table(
         name = "conversations",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_conversations_game_character",
-                columnNames = {"game_progress_id", "character_type"}
-        )
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_conversations_game_character",
+                        columnNames = {"game_progress_id", "character_type"}
+                ),
+                @UniqueConstraint(
+                        name = "uk_conversations_ai_session_id",
+                        columnNames = "ai_session_id"
+                )
+        }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Conversation {
@@ -52,6 +59,9 @@ public class Conversation {
     @Column(name = "question_count", nullable = false)
     private int questionCount;
 
+    @Column(name = "ai_session_id", nullable = false, length = 36)
+    private String aiSessionId;
+
     @Column(name = "started_at")
     private LocalDateTime startedAt;
 
@@ -63,6 +73,7 @@ public class Conversation {
         this.characterType = characterType;
         this.status = ConversationStatus.NOT_STARTED;
         this.questionCount = 0;
+        this.aiSessionId = UUID.randomUUID().toString();
     }
 
     public static Conversation create(GameProgress gameProgress, CharacterType characterType) {

@@ -22,6 +22,7 @@ import static org.springframework.http.HttpMethod.POST;
 class AiServerSuspectClientTest {
 
     private static final String BASE_URL = "http://ai-server.test";
+    private static final String AI_SESSION_ID = "550e8400-e29b-41d4-a716-446655440000";
 
     @ParameterizedTest
     @EnumSource(CharacterType.class)
@@ -37,13 +38,13 @@ class AiServerSuspectClientTest {
                 .andExpect(method(POST))
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(content().json("""
-                        {"session_id":"conversation-42","message":"어디에 있었나요?"}
+                        {"session_id":"550e8400-e29b-41d4-a716-446655440000","message":"어디에 있었나요?"}
                         """))
                 .andRespond(withSuccess("""
                         {"reply":"  답변입니다.  "}
                         """, MediaType.APPLICATION_JSON));
 
-        String answer = client.answer(characterType, 42L, "어디에 있었나요?");
+        String answer = client.answer(characterType, AI_SESSION_ID, "어디에 있었나요?");
 
         assertThat(answer).isEqualTo("답변입니다.");
         server.verify();
@@ -60,7 +61,7 @@ class AiServerSuspectClientTest {
         server.expect(requestTo(BASE_URL + "/chat/felix"))
                 .andRespond(withSuccess("{\"reply\":\" \"}", MediaType.APPLICATION_JSON));
 
-        assertThatThrownBy(() -> client.answer(CharacterType.FELIX, 1L, "질문"))
+        assertThatThrownBy(() -> client.answer(CharacterType.FELIX, AI_SESSION_ID, "질문"))
                 .isInstanceOf(BusinessException.class);
     }
 

@@ -63,7 +63,7 @@ public class ConversationCommandService {
         List<ConversationMessage> existingMessages = conversationMessageRepository
                 .findAllByConversationIdOrderBySequenceNumberAsc(conversation.getId());
         String question = request.content().trim();
-        String answer = suspectAiClient.answer(characterType, conversation.getId(), question);
+        String answer = suspectAiClient.answer(characterType, conversation.getAiSessionId(), question);
         int nextSequenceNumber = existingMessages.isEmpty()
                 ? 1
                 : existingMessages.get(existingMessages.size() - 1).getSequenceNumber() + 1;
