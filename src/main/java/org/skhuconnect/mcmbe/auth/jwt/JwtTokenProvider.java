@@ -80,6 +80,7 @@ public class JwtTokenProvider {
     private String createToken(Member member, TokenType tokenType, long expiration) {
         Instant now = Instant.now();
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
                 .subject(member.getId().toString())
                 .claim(TOKEN_TYPE_CLAIM, tokenType.name())
                 .claim(ROLE_CLAIM, member.getRole().name())
