@@ -26,7 +26,8 @@ public record GameProgressResponse(
         DesignDirection designDirection,
 
         @Schema(
-                description = "현재 진행 중인 사건. 사건 선택 전에는 null. SIGNATURE: 시그니처 사건, FUNCTION: 기능 사건",
+                description = "선택된 사건. 최초 선택 전과 FUNCTION 성공 후 다음 사건 선택 전에는 null이며, "
+                        + "실패 또는 전체 완료 후에는 마지막 사건을 유지합니다.",
                 allowableValues = {"SIGNATURE", "FUNCTION"},
                 example = "SIGNATURE",
                 nullable = true

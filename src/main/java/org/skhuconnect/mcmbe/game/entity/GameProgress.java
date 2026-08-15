@@ -71,4 +71,21 @@ public class GameProgress {
         this.currentCase = currentCase;
         this.status = GameStatus.IN_PROGRESS;
     }
+
+    public void completeCurrentCase(boolean succeeded) {
+        if (!succeeded) {
+            this.status = GameStatus.FAILED;
+            return;
+        }
+
+        if (currentCase == CaseType.FUNCTION) {
+            this.functionSucceeded = true;
+            this.currentCase = null;
+            this.status = GameStatus.NOT_STARTED;
+            return;
+        }
+
+        this.signatureSucceeded = true;
+        this.status = GameStatus.COMPLETED;
+    }
 }

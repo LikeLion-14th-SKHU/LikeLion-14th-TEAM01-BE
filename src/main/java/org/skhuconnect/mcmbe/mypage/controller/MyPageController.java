@@ -29,7 +29,7 @@ public class MyPageController {
 
     @Operation(
             summary = "마이페이지 조회",
-            description = "저장된 디자이너 닉네임을 조회합니다. 두 사건을 모두 성공한 경우 디자이너 패스를 최초 1회 발급하며, 이후 동일한 패스를 반환합니다.",
+            description = "저장된 디자이너 닉네임과 게임 완료 시 발급된 디자이너 패스를 조회합니다. 기존 완료 데이터에 패스가 없으면 최초 조회 시 보완 발급하며, 이후 동일한 패스를 반환합니다.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses({

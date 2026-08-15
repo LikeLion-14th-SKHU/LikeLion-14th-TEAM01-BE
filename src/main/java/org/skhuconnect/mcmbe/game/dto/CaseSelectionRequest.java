@@ -6,9 +6,9 @@ import org.skhuconnect.mcmbe.game.entity.CaseType;
 
 public record CaseSelectionRequest(
         @Schema(
-                description = "처음 진행할 사건. SIGNATURE: 시그니처 사건, FUNCTION: 기능 사건",
+                description = "진행할 사건. FUNCTION 성공 후에만 SIGNATURE를 선택할 수 있습니다.",
                 allowableValues = {"SIGNATURE", "FUNCTION"},
-                example = "SIGNATURE"
+                example = "FUNCTION"
         )
         @NotNull(message = "진행할 사건은 필수입니다.")
         CaseType currentCase
