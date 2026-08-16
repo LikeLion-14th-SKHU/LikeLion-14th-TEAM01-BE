@@ -75,6 +75,23 @@ class McmBeApplicationTests {
     }
 
     @Test
+    void swaggerDocumentsProductRecommendationPath() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(
+                        "$.paths['/detective/products/recommendation'].get"
+                ).exists());
+    }
+
+    @Test
+    void productRecommendationRequiresAuthentication() throws Exception {
+        mockMvc.perform(get("/detective/products/recommendation"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+    }
+
+    @Test
     void allowsLocalFrontendCorsRequest() throws Exception {
         mockMvc.perform(get("/detective/auth/kakao/login")
                         .header("Origin", "http://localhost:5173"))
