@@ -19,11 +19,18 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Configuration
 @EnableConfigurationProperties(AuthProperties.class)
 public class SecurityConfig {
+
+    private static final List<String> REQUIRED_ALLOWED_ORIGINS = List.of(
+            "http://localhost:5173",
+            "https://seongju-detective.vercel.app"
+    );
 
     @Bean
     public SecurityFilterChain securityFilterChain(
@@ -59,13 +66,16 @@ public class SecurityConfig {
     }
     @Bean
     public CorsConfigurationSource corsConfigurationSource(
-            @Value("${CORS_ALLOWED_ORIGINS:http://localhost:3000}") String allowedOrigins
+            @Value("${CORS_ALLOWED_ORIGINS:}") String configuredAllowedOrigins
     ) {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.stream(allowedOrigins.split(","))
+        Set<String> allowedOrigins = new LinkedHashSet<>(REQUIRED_ALLOWED_ORIGINS);
+        allowedOrigins.addAll(Arrays.stream(configuredAllowedOrigins.split(","))
                 .map(String::trim)
                 .filter(origin -> !origin.isBlank())
                 .toList());
+
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.copyOf(allowedOrigins));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
         configuration.setExposedHeaders(List.of("Authorization"));

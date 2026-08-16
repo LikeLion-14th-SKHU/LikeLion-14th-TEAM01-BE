@@ -1,6 +1,7 @@
 package org.skhuconnect.mcmbe.auth.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -11,6 +12,7 @@ import org.skhuconnect.mcmbe.auth.service.AuthService;
 import org.skhuconnect.mcmbe.common.exception.SuccessCode;
 import org.skhuconnect.mcmbe.common.response.ApiResTemplate;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,6 +31,9 @@ import java.net.URI;
 @RestController
 @RequestMapping("/detective/auth")
 public class AuthController {
+
+    private static final String FRONTEND_AUTH_CALLBACK_URL =
+            "https://seongju-detective.vercel.app/";
 
     private final AuthService authService;
 
@@ -49,17 +54,36 @@ public class AuthController {
 
     @Operation(
             summary = "카카오 로그인 결과 처리",
-            description = "카카오 로그인 완료 후 인가 코드를 받아 사용자 정보를 조회하고 우리 서비스 JWT를 발급합니다."
+            description = "카카오 로그인 완료 후 JWT를 발급하고 프론트엔드 인증 callback으로 redirect합니다. "
+                    + "인증 결과는 서버 로그와 Referer에 남지 않도록 URL fragment로 전달합니다."
     )
+    @ApiResponse(responseCode = "302", description = "프론트엔드 인증 화면으로 redirect")
     @GetMapping("/kakao/callback")
-    public ResponseEntity<ApiResTemplate<KakaoLoginResponse>> kakaoCallback(
+    public ResponseEntity<Void> kakaoCallback(
             @RequestParam @NotBlank String code,
             @RequestParam @NotBlank String state
     ) {
-        return ResponseEntity.ok(ApiResTemplate.success(
-                SuccessCode.OK,
-                authService.loginWithKakao(code, state)
-        ));
+        KakaoLoginResponse login = authService.loginWithKakao(code, state);
+        URI redirectUri = URI.create(UriComponentsBuilder
+                .fromUriString(FRONTEND_AUTH_CALLBACK_URL)
+                .fragment("tokenType={tokenType}&accessToken={accessToken}"
+                        + "&accessTokenExpiresIn={accessTokenExpiresIn}"
+                        + "&refreshToken={refreshToken}"
+                        + "&refreshTokenExpiresIn={refreshTokenExpiresIn}"
+                        + "&memberId={memberId}&newMember={newMember}&nickname={nickname}")
+                .buildAndExpand(
+                        login.tokens().tokenType(),
+                        login.tokens().accessToken(),
+                        login.tokens().accessTokenExpiresIn(),
+                        login.tokens().refreshToken(),
+                        login.tokens().refreshTokenExpiresIn(),
+                        login.memberId(),
+                        login.newMember(),
+                        login.nickname()
+                )
+                .encode()
+                .toUriString());
+        return ResponseEntity.status(302).location(redirectUri).build();
     }
 
     @Operation(

@@ -8,6 +8,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -71,6 +72,41 @@ class McmBeApplicationTests {
                 .andExpect(jsonPath("$.paths['/detective/auth/kakao/callback']").exists())
                 .andExpect(jsonPath("$.paths['/detective/auth/refresh']").exists())
                 .andExpect(jsonPath("$.paths['/detective/auth/kakao/authorization-url']").doesNotExist());
+    }
+
+    @Test
+    void allowsLocalFrontendCorsRequest() throws Exception {
+        mockMvc.perform(get("/detective/auth/kakao/login")
+                        .header("Origin", "http://localhost:5173"))
+                .andExpect(status().isFound())
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:5173"))
+                .andExpect(header().string("Access-Control-Allow-Credentials", "true"));
+    }
+
+    @Test
+    void allowsDeployedFrontendCorsRequest() throws Exception {
+        mockMvc.perform(get("/detective/auth/kakao/login")
+                        .header("Origin", "https://seongju-detective.vercel.app"))
+                .andExpect(status().isFound())
+                .andExpect(header().string(
+                        "Access-Control-Allow-Origin",
+                        "https://seongju-detective.vercel.app"
+                ));
+    }
+
+    @Test
+    void allowsCorsPreflightWithoutAuthentication() throws Exception {
+        mockMvc.perform(options("/detective/games/final-deduction")
+                        .header("Origin", "https://seongju-detective.vercel.app")
+                        .header("Access-Control-Request-Method", "POST")
+                        .header("Access-Control-Request-Headers", "authorization,content-type"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(
+                        "Access-Control-Allow-Origin",
+                        "https://seongju-detective.vercel.app"
+                ))
+                .andExpect(header().string("Access-Control-Allow-Methods", containsString("POST")))
+                .andExpect(header().string("Access-Control-Allow-Headers", containsString("authorization")));
     }
 
 }

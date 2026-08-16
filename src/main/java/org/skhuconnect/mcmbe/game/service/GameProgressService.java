@@ -3,8 +3,6 @@ package org.skhuconnect.mcmbe.game.service;
 import org.skhuconnect.mcmbe.common.exception.BusinessException;
 import org.skhuconnect.mcmbe.common.exception.ErrorCode;
 import org.skhuconnect.mcmbe.conversation.entity.CharacterType;
-import org.skhuconnect.mcmbe.conversation.entity.ConversationStatus;
-import org.skhuconnect.mcmbe.conversation.repository.ConversationRepository;
 import org.skhuconnect.mcmbe.game.dto.CaseSelectionRequest;
 import org.skhuconnect.mcmbe.game.dto.DesignDirectionRequest;
 import org.skhuconnect.mcmbe.game.dto.FinalDeductionRequest;
@@ -20,25 +18,20 @@ import org.skhuconnect.mcmbe.mypage.service.DesignerPassIssuanceService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 @Service
 public class GameProgressService {
 
     private final MemberRepository memberRepository;
     private final GameProgressRepository gameProgressRepository;
-    private final ConversationRepository conversationRepository;
     private final DesignerPassIssuanceService designerPassIssuanceService;
 
     public GameProgressService(
             MemberRepository memberRepository,
             GameProgressRepository gameProgressRepository,
-            ConversationRepository conversationRepository,
             DesignerPassIssuanceService designerPassIssuanceService
     ) {
         this.memberRepository = memberRepository;
         this.gameProgressRepository = gameProgressRepository;
-        this.conversationRepository = conversationRepository;
         this.designerPassIssuanceService = designerPassIssuanceService;
     }
 
@@ -106,17 +99,6 @@ public class GameProgressService {
             throw new BusinessException(ErrorCode.CHARACTER_NOT_AVAILABLE_FOR_CURRENT_CASE);
         }
 
-        List<CharacterType> suspects = suspectsOf(currentCase);
-        long completedConversationCount = conversationRepository
-                .countByGameProgressIdAndCharacterTypeInAndStatus(
-                        gameProgress.getId(),
-                        suspects,
-                        ConversationStatus.COMPLETED
-                );
-        if (completedConversationCount != suspects.size()) {
-            throw new BusinessException(ErrorCode.CONVERSATIONS_NOT_COMPLETED);
-        }
-
         boolean correct = isCorrectAnswer(currentCase, request.characterType());
         gameProgress.completeCurrentCase(correct);
         designerPassIssuanceService.issueIfEligible(member, gameProgress);
@@ -141,13 +123,6 @@ public class GameProgressService {
         if (gameProgress.isFunctionSucceeded() && selectedCase != CaseType.SIGNATURE) {
             throw new BusinessException(ErrorCode.CASE_SELECTION_NOT_ALLOWED);
         }
-    }
-
-    private List<CharacterType> suspectsOf(CaseType caseType) {
-        return switch (caseType) {
-            case FUNCTION -> List.of(CharacterType.FELIX, CharacterType.EMIL);
-            case SIGNATURE -> List.of(CharacterType.CLARA, CharacterType.JOHANNES);
-        };
     }
 
     private boolean isCorrectAnswer(CaseType caseType, CharacterType characterType) {

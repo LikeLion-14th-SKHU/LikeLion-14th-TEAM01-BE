@@ -105,7 +105,7 @@ public class GameProgressController {
     @Operation(
             summary = "현재 사건 최종 추리",
             description = """
-                    현재 사건에 속한 두 용의자와 각각 3회 대화를 완료한 뒤 범인 한 명을 제출합니다.
+                    질문 기회가 남아 있어도 현재 사건의 범인 한 명을 제출해 최종 추리할 수 있습니다.
                     현재 사건 밖의 용의자는 제출할 수 없고, 성공 또는 실패로 종료된 사건은 다시 추리할 수 없습니다.
                     FUNCTION 성공 시 사건 선택 가능 상태로 돌아가며, 이후 SIGNATURE를 선택할 수 있습니다.
                     오답이면 전체 게임이 FAILED, SIGNATURE 정답이면 전체 게임이 COMPLETED가 되고
@@ -118,7 +118,7 @@ public class GameProgressController {
             @ApiResponse(responseCode = "400", description = "용의자가 누락되거나 허용된 Enum 값이 아님 (INVALID_INPUT_VALUE)"),
             @ApiResponse(responseCode = "401", description = "인증 토큰 오류 (UNAUTHORIZED, INVALID_TOKEN, EXPIRED_TOKEN)"),
             @ApiResponse(responseCode = "403", description = "현재 사건에 속하지 않은 용의자 (CHARACTER_NOT_AVAILABLE_FOR_CURRENT_CASE)"),
-            @ApiResponse(responseCode = "409", description = "사건 미진행, 대화 미완료 또는 종료된 사건 재추리 (GAME_NOT_IN_PROGRESS, CONVERSATIONS_NOT_COMPLETED, FINAL_DEDUCTION_ALREADY_COMPLETED)")
+            @ApiResponse(responseCode = "409", description = "사건 미진행 또는 종료된 사건 재추리 (GAME_NOT_IN_PROGRESS, FINAL_DEDUCTION_ALREADY_COMPLETED)")
     })
     @PostMapping("/final-deduction")
     public ResponseEntity<ApiResTemplate<FinalDeductionResponse>> deduce(

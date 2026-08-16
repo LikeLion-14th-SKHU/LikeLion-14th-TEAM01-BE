@@ -16,6 +16,10 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
 
     Optional<Conversation> findByGameProgressIdAndCharacterType(Long gameProgressId, CharacterType characterType);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select conversation from Conversation conversation where conversation.id = :conversationId")
+    Optional<Conversation> findByIdForUpdate(@Param("conversationId") Long conversationId);
+
     long countByGameProgressIdAndCharacterTypeInAndStatus(
             Long gameProgressId,
             Collection<CharacterType> characterTypes,
