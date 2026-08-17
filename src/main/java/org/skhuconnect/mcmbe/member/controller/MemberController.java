@@ -12,9 +12,11 @@ import org.skhuconnect.mcmbe.common.response.ApiResTemplate;
 import org.skhuconnect.mcmbe.member.dto.DesignerNameRequest;
 import org.skhuconnect.mcmbe.member.dto.DesignerNameResponse;
 import org.skhuconnect.mcmbe.member.service.MemberService;
+import org.skhuconnect.mcmbe.member.service.MemberWithdrawalService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,9 +30,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class MemberController {
 
     private final MemberService memberService;
+    private final MemberWithdrawalService memberWithdrawalService;
 
-    public MemberController(MemberService memberService) {
+    public MemberController(
+            MemberService memberService,
+            MemberWithdrawalService memberWithdrawalService
+    ) {
         this.memberService = memberService;
+        this.memberWithdrawalService = memberWithdrawalService;
     }
 
     @Operation(
@@ -57,5 +64,24 @@ public class MemberController {
         );
         return ResponseEntity.status(SuccessCode.CREATED.getHttpStatus())
                 .body(ApiResTemplate.success(SuccessCode.CREATED, response));
+    }
+
+    @Operation(
+            summary = "회원탈퇴",
+            description = "JWT로 인증된 MCM 회원과 해당 회원의 게임, 대화, 디자이너 패스, "
+                    + "Refresh Token 데이터를 삭제합니다. 카카오 계정 자체는 삭제하지 않습니다.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "회원탈퇴 성공"),
+            @ApiResponse(responseCode = "401", description = "Access Token이 없거나 유효하지 않음"),
+            @ApiResponse(responseCode = "404", description = "JWT의 회원 정보를 찾을 수 없음 (MEMBER_NOT_FOUND)")
+    })
+    @DeleteMapping("/members/me")
+    public ResponseEntity<Void> withdraw(
+            @AuthenticationPrincipal AuthenticatedMember authenticatedMember
+    ) {
+        memberWithdrawalService.withdraw(authenticatedMember.memberId());
+        return ResponseEntity.noContent().build();
     }
 }
