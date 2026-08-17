@@ -55,7 +55,9 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandler))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
-                                "/detective/auth/**",
+                                "/detective/auth/kakao/login",
+                                "/detective/auth/kakao/callback",
+                                "/detective/auth/refresh",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**"

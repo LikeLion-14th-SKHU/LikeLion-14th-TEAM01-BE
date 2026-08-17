@@ -13,6 +13,8 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
 
     Optional<RefreshToken> findByMemberId(Long memberId);
 
+    long deleteByMemberId(Long memberId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select refreshToken from RefreshToken refreshToken where refreshToken.member.id = :memberId")
     Optional<RefreshToken> findByMemberIdForUpdate(@Param("memberId") Long memberId);

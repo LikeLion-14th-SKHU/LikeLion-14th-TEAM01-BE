@@ -37,4 +37,8 @@ public class AuthService {
     public TokenResponse refresh(String refreshToken) {
         return authTransactionService.rotate(refreshToken);
     }
+
+    public void logout(Long memberId) {
+        authTransactionService.logout(memberId);
+    }
 }

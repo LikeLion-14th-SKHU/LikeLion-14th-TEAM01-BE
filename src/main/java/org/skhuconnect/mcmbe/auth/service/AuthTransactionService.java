@@ -80,6 +80,11 @@ public class AuthTransactionService {
         return tokens;
     }
 
+    @Transactional
+    public void logout(Long memberId) {
+        refreshTokenRepository.deleteByMemberId(memberId);
+    }
+
     private void saveOrRotate(Member member, String refreshToken) {
         String tokenHash = hash(refreshToken);
         RefreshToken storedToken = refreshTokenRepository.findByMemberId(member.getId())

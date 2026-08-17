@@ -8,7 +8,9 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -71,7 +73,23 @@ class McmBeApplicationTests {
                 .andExpect(jsonPath("$.paths['/detective/auth/kakao/login']").exists())
                 .andExpect(jsonPath("$.paths['/detective/auth/kakao/callback']").exists())
                 .andExpect(jsonPath("$.paths['/detective/auth/refresh']").exists())
+                .andExpect(jsonPath("$.paths['/detective/auth/logout'].post").exists())
+                .andExpect(jsonPath("$.paths['/detective/members/me'].delete").exists())
                 .andExpect(jsonPath("$.paths['/detective/auth/kakao/authorization-url']").doesNotExist());
+    }
+
+    @Test
+    void logoutRequiresAuthentication() throws Exception {
+        mockMvc.perform(post("/detective/auth/logout"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+    }
+
+    @Test
+    void withdrawalRequiresAuthentication() throws Exception {
+        mockMvc.perform(delete("/detective/members/me"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
     }
 
     @Test
