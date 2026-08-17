@@ -25,10 +25,10 @@ MCM은 AI 용의자와 자유 대화를 진행해 두 사건의 범인을 추리
 
 | 영역 | API |
 | --- | --- |
-| 인증 | `GET /auth/kakao/login`, `GET /auth/kakao/callback`, `POST /auth/refresh`, `POST /auth/logout` |
+| 인증 | `GET /auth/kakao/login`, `GET /auth/kakao/callback`, `POST /auth/exchange`, `POST /auth/refresh`, `POST /auth/logout` |
 | 회원 | `POST /designer-name`, `DELETE /members/me` |
 | 게임 | `POST /games/design-direction`, `POST /games/current-case`, `POST /games/final-deduction`, `GET /games` |
-| 대화 | `POST /conversations/{characterType}/messages`, `GET /conversations/{characterType}` |
+| 대화 | `POST /conversations/{characterType}/messages`, `POST /conversations/{characterType}/complete`, `GET /conversations/{characterType}` |
 | 마이페이지·상품 | `GET /mypage`, `GET /products/recommendation` |
 
 위 경로에는 모두 `/detective` 접두사가 붙습니다. 로그인·토큰 재발급을 제외한 API는 Bearer Access Token이 필요합니다.

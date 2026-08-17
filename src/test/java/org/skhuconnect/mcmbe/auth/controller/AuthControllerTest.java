@@ -1,11 +1,12 @@
 package org.skhuconnect.mcmbe.auth.controller;
 
 import org.junit.jupiter.api.Test;
-import org.skhuconnect.mcmbe.auth.dto.KakaoLoginResponse;
+import org.skhuconnect.mcmbe.auth.dto.LoginCodeExchangeRequest;
+import org.skhuconnect.mcmbe.auth.dto.LoginExchangeResponse;
 import org.skhuconnect.mcmbe.auth.dto.RefreshTokenRequest;
 import org.skhuconnect.mcmbe.auth.dto.TokenResponse;
-import org.skhuconnect.mcmbe.common.response.ApiResTemplate;
 import org.skhuconnect.mcmbe.auth.service.AuthService;
+import org.skhuconnect.mcmbe.common.response.ApiResTemplate;
 import org.springframework.http.ResponseEntity;
 
 import java.net.URI;
@@ -20,17 +21,10 @@ import static org.mockito.Mockito.when;
 class AuthControllerTest {
 
     @Test
-    void redirectsKakaoLoginResultToFrontendWithAuthenticationFragment() {
+    void redirectsKakaoLoginResultToFrontendWithOneTimeCode() {
         AuthService authService = mock(AuthService.class);
-        TokenResponse tokens = new TokenResponse(
-                "Bearer",
-                "access.token.value",
-                1_800_000L,
-                "refresh.token.value",
-                1_209_600_000L
-        );
         when(authService.loginWithKakao("authorization-code", "oauth-state"))
-                .thenReturn(new KakaoLoginResponse(7L, true, "테스터", tokens));
+                .thenReturn("one-time-login-code");
 
         ResponseEntity<Void> response = new AuthController(authService)
                 .kakaoCallback("authorization-code", "oauth-state");
@@ -40,28 +34,33 @@ class AuthControllerTest {
         assertThat(location).isNotNull();
         assertThat(location.getScheme()).isEqualTo("https");
         assertThat(location.getHost()).isEqualTo("seongju-detective.vercel.app");
-        assertThat(location.getPath()).isEqualTo("/");
-        assertThat(location.getQuery()).isNull();
-        assertThat(URLDecoder.decode(location.getRawFragment(), StandardCharsets.UTF_8))
-                .contains("tokenType=Bearer")
-                .contains("accessToken=access.token.value")
-                .contains("refreshToken=refresh.token.value")
-                .contains("memberId=7")
-                .contains("newMember=true")
-                .contains("nickname=테스터");
+        assertThat(location.getPath()).isEqualTo("/auth/callback");
+        assertThat(URLDecoder.decode(location.getQuery(), StandardCharsets.UTF_8))
+                .isEqualTo("code=one-time-login-code");
+        assertThat(location.getFragment()).isNull();
         verify(authService).loginWithKakao("authorization-code", "oauth-state");
+    }
+
+    @Test
+    void exchangesOneTimeLoginCodeForTokenPair() {
+        AuthService authService = mock(AuthService.class);
+        TokenResponse tokens = new TokenResponse("Bearer", "access-token", 1_800L, "refresh-token", 86_400L);
+        LoginExchangeResponse expected = new LoginExchangeResponse(7L, true, "테스터", tokens);
+        when(authService.exchangeLoginCode("one-time-login-code")).thenReturn(expected);
+
+        ResponseEntity<ApiResTemplate<LoginExchangeResponse>> response = new AuthController(authService)
+                .exchange(new LoginCodeExchangeRequest("one-time-login-code"));
+
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().data()).isEqualTo(expected);
+        verify(authService).exchangeLoginCode("one-time-login-code");
     }
 
     @Test
     void refreshReturnsRotatedAccessAndRefreshTokensWithExpirationInformation() {
         AuthService authService = mock(AuthService.class);
-        TokenResponse rotated = new TokenResponse(
-                "Bearer",
-                "new-access-token",
-                1_800L,
-                "new-refresh-token",
-                1_209_600L
-        );
+        TokenResponse rotated = new TokenResponse("Bearer", "new-access-token", 1_800L, "new-refresh-token", 1_209_600L);
         when(authService.refresh("stored-refresh-token")).thenReturn(rotated);
 
         ResponseEntity<ApiResTemplate<TokenResponse>> response = new AuthController(authService)
@@ -70,10 +69,6 @@ class AuthControllerTest {
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().data()).isEqualTo(rotated);
-        assertThat(response.getBody().data().accessToken()).isNotBlank();
-        assertThat(response.getBody().data().refreshToken()).isNotBlank();
-        assertThat(response.getBody().data().accessTokenExpiresIn()).isPositive();
-        assertThat(response.getBody().data().refreshTokenExpiresIn()).isPositive();
         verify(authService).refresh("stored-refresh-token");
     }
 

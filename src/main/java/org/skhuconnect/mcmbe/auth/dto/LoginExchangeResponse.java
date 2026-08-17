@@ -1,6 +1,6 @@
 package org.skhuconnect.mcmbe.auth.dto;
 
-public record KakaoLoginResponse(
+public record LoginExchangeResponse(
         Long memberId,
         boolean newMember,
         String nickname,

@@ -6,6 +6,8 @@ import org.skhuconnect.mcmbe.auth.config.AuthProperties;
 import org.skhuconnect.mcmbe.auth.dto.TokenResponse;
 import org.skhuconnect.mcmbe.auth.jwt.JwtTokenProvider;
 import org.skhuconnect.mcmbe.auth.token.entity.RefreshToken;
+import org.skhuconnect.mcmbe.auth.token.entity.LoginCode;
+import org.skhuconnect.mcmbe.auth.token.repository.LoginCodeRepository;
 import org.skhuconnect.mcmbe.auth.token.repository.RefreshTokenRepository;
 import org.skhuconnect.mcmbe.common.exception.BusinessException;
 import org.skhuconnect.mcmbe.common.exception.ErrorCode;
@@ -30,6 +32,7 @@ class AuthTransactionServiceTest {
 
     private MemberRepository memberRepository;
     private RefreshTokenRepository refreshTokenRepository;
+    private LoginCodeRepository loginCodeRepository;
     private JwtTokenProvider jwtTokenProvider;
     private AuthTransactionService service;
     private Member member;
@@ -38,10 +41,12 @@ class AuthTransactionServiceTest {
     void setUp() {
         memberRepository = mock(MemberRepository.class);
         refreshTokenRepository = mock(RefreshTokenRepository.class);
+        loginCodeRepository = mock(LoginCodeRepository.class);
         jwtTokenProvider = tokenProvider(1_800_000L, 1_209_600_000L);
         service = new AuthTransactionService(
                 memberRepository,
                 refreshTokenRepository,
+                loginCodeRepository,
                 jwtTokenProvider
         );
         member = Member.kakao("provider-id", null, "회원", null);
@@ -102,6 +107,7 @@ class AuthTransactionServiceTest {
         AuthTransactionService shortLivedService = new AuthTransactionService(
                 memberRepository,
                 refreshTokenRepository,
+                loginCodeRepository,
                 shortLivedProvider
         );
         String expiredRefreshToken = shortLivedProvider.issueTokens(member).refreshToken();
@@ -118,6 +124,29 @@ class AuthTransactionServiceTest {
         service.logout(1L);
 
         verify(refreshTokenRepository).deleteByMemberId(1L);
+    }
+
+    @Test
+    void exchangesLoginCodeOnlyOnce() {
+        LoginCode loginCode = LoginCode.issue(
+                member,
+                hash("login-code"),
+                true,
+                java.time.LocalDateTime.now().plusMinutes(1)
+        );
+        when(loginCodeRepository.findByCodeHashForUpdate(hash("login-code")))
+                .thenReturn(Optional.of(loginCode));
+
+        org.skhuconnect.mcmbe.auth.dto.LoginExchangeResponse response = service.exchangeLoginCode("login-code");
+
+        assertThat(response.memberId()).isEqualTo(1L);
+        assertThat(response.newMember()).isTrue();
+        assertThat(response.tokens().accessToken()).isNotBlank();
+        assertThat(loginCode.getUsedAt()).isNotNull();
+        assertThatThrownBy(() -> service.exchangeLoginCode("login-code"))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.INVALID_LOGIN_CODE);
     }
 
     private JwtTokenProvider tokenProvider(long accessExpiration, long refreshExpiration) {

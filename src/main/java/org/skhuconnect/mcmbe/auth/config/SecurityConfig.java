@@ -57,6 +57,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/detective/auth/kakao/login",
                                 "/detective/auth/kakao/callback",
+                                "/detective/auth/exchange",
                                 "/detective/auth/refresh",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",

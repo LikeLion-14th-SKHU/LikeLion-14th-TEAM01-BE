@@ -5,7 +5,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import org.skhuconnect.mcmbe.auth.dto.KakaoLoginResponse;
+import org.skhuconnect.mcmbe.auth.dto.LoginCodeExchangeRequest;
+import org.skhuconnect.mcmbe.auth.dto.LoginExchangeResponse;
 import org.skhuconnect.mcmbe.auth.dto.RefreshTokenRequest;
 import org.skhuconnect.mcmbe.auth.dto.TokenResponse;
 import org.skhuconnect.mcmbe.auth.jwt.AuthenticatedMember;
@@ -35,7 +36,7 @@ import java.net.URI;
 public class AuthController {
 
     private static final String FRONTEND_AUTH_CALLBACK_URL =
-            "https://seongju-detective.vercel.app/";
+            "https://seongju-detective.vercel.app/auth/callback";
 
     private final AuthService authService;
 
@@ -56,8 +57,7 @@ public class AuthController {
 
     @Operation(
             summary = "카카오 로그인 결과 처리",
-            description = "카카오 로그인 완료 후 JWT를 발급하고 프론트엔드 인증 callback으로 redirect합니다. "
-                    + "인증 결과는 서버 로그와 Referer에 남지 않도록 URL fragment로 전달합니다."
+            description = "카카오 로그인 완료 후 짧은 수명의 일회용 Login Code를 발급하고 프론트엔드 인증 callback으로 redirect합니다."
     )
     @ApiResponse(responseCode = "302", description = "프론트엔드 인증 화면으로 redirect")
     @GetMapping("/kakao/callback")
@@ -65,27 +65,30 @@ public class AuthController {
             @RequestParam @NotBlank String code,
             @RequestParam @NotBlank String state
     ) {
-        KakaoLoginResponse login = authService.loginWithKakao(code, state);
+        String loginCode = authService.loginWithKakao(code, state);
         URI redirectUri = URI.create(UriComponentsBuilder
                 .fromUriString(FRONTEND_AUTH_CALLBACK_URL)
-                .fragment("tokenType={tokenType}&accessToken={accessToken}"
-                        + "&accessTokenExpiresIn={accessTokenExpiresIn}"
-                        + "&refreshToken={refreshToken}"
-                        + "&refreshTokenExpiresIn={refreshTokenExpiresIn}"
-                        + "&memberId={memberId}&newMember={newMember}&nickname={nickname}")
-                .buildAndExpand(
-                        login.tokens().tokenType(),
-                        login.tokens().accessToken(),
-                        login.tokens().accessTokenExpiresIn(),
-                        login.tokens().refreshToken(),
-                        login.tokens().refreshTokenExpiresIn(),
-                        login.memberId(),
-                        login.newMember(),
-                        login.nickname()
-                )
+                .queryParam("code", loginCode)
+                .build()
                 .encode()
                 .toUriString());
         return ResponseEntity.status(302).location(redirectUri).build();
+    }
+
+    @Operation(
+            summary = "일회용 Login Code 교환",
+            description = "카카오 로그인 callback으로 전달받은 일회용 Login Code를 한 번만 소비하고 Access Token과 Refresh Token을 발급합니다."
+    )
+    @ApiResponse(responseCode = "200", description = "JWT 발급 성공")
+    @ApiResponse(responseCode = "401", description = "유효하지 않거나 만료된 Login Code (INVALID_LOGIN_CODE)")
+    @PostMapping("/exchange")
+    public ResponseEntity<ApiResTemplate<LoginExchangeResponse>> exchange(
+            @Valid @RequestBody LoginCodeExchangeRequest request
+    ) {
+        return ResponseEntity.ok(ApiResTemplate.success(
+                SuccessCode.OK,
+                authService.exchangeLoginCode(request.code())
+        ));
     }
 
     @Operation(

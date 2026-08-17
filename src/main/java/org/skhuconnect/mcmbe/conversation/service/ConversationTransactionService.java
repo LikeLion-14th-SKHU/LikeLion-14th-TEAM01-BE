@@ -93,6 +93,25 @@ public class ConversationTransactionService {
         return ConversationResponse.from(conversation, allMessages);
     }
 
+    @Transactional
+    public ConversationResponse completeEarly(Long memberId, CharacterType characterType) {
+        GameProgress gameProgress = findGameProgressForUpdate(memberId);
+        validateAccess(gameProgress, characterType);
+
+        Conversation conversation = conversationRepository
+                .findByGameProgressIdAndCharacterTypeForUpdate(gameProgress.getId(), characterType)
+                .orElseGet(() -> conversationRepository.save(
+                        Conversation.create(gameProgress, characterType)
+                ));
+        conversation.completeEarly();
+
+        return ConversationResponse.from(
+                conversation,
+                conversationMessageRepository
+                        .findAllByConversationIdOrderBySequenceNumberAsc(conversation.getId())
+        );
+    }
+
     private GameProgress findGameProgressForUpdate(Long memberId) {
         return gameProgressRepository.findByMemberIdForUpdate(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.GAME_NOT_IN_PROGRESS));

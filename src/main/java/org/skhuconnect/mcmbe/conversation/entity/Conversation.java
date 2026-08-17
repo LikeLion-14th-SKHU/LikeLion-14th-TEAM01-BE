@@ -104,6 +104,19 @@ public class Conversation {
         status = ConversationStatus.IN_PROGRESS;
     }
 
+    public void completeEarly() {
+        if (status == ConversationStatus.COMPLETED) {
+            return;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (startedAt == null) {
+            startedAt = now;
+        }
+        status = ConversationStatus.COMPLETED;
+        completedAt = now;
+    }
+
     public int getRemainingQuestionCount() {
         return MAX_QUESTION_COUNT - questionCount;
     }

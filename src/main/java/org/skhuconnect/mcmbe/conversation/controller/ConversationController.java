@@ -81,6 +81,33 @@ public class ConversationController {
                 conversationCommandService.ask(authenticatedMember.memberId(), characterType, request)
         ));
     }
+
+    @Operation(
+            summary = "용의자 대화 조기 종료",
+            description = """
+                    현재 사건의 용의자 대화를 질문 횟수와 관계없이 종료합니다.
+                    종료 후 대화 상태는 COMPLETED가 되며 추가 질문은 허용하지 않습니다.
+                    질문을 하지 않은 대화도 종료할 수 있고, 현재 질문 수와 기존 메시지는 유지됩니다.
+                    """,
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "대화 조기 종료 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 토큰 오류 (UNAUTHORIZED, INVALID_TOKEN, EXPIRED_TOKEN)"),
+            @ApiResponse(responseCode = "403", description = "현재 사건에 속하지 않은 캐릭터 (CHARACTER_NOT_AVAILABLE_FOR_CURRENT_CASE)"),
+            @ApiResponse(responseCode = "409", description = "게임 또는 사건이 진행 중이 아님 (GAME_NOT_IN_PROGRESS)")
+    })
+    @PostMapping("/{characterType}/complete")
+    public ResponseEntity<ApiResTemplate<ConversationResponse>> completeEarly(
+            @AuthenticationPrincipal AuthenticatedMember authenticatedMember,
+            @PathVariable CharacterType characterType
+    ) {
+        return ResponseEntity.ok(ApiResTemplate.success(
+                SuccessCode.OK,
+                conversationCommandService.completeEarly(authenticatedMember.memberId(), characterType)
+        ));
+    }
+
     @Operation(
             summary = "캐릭터별 대화 내역 조회",
             description = """
@@ -93,7 +120,7 @@ public class ConversationController {
                     ConversationStatus:
                     - NOT_STARTED: 아직 질문하지 않은 상태
                     - IN_PROGRESS: 1~2회 질문과 답변이 저장된 상태
-                    - COMPLETED: 3회 질문과 답변 저장이 완료된 상태
+                    - COMPLETED: 3회 질문과 답변 저장이 완료되었거나 조기 종료된 상태
 
                     캐릭터별 최대 질문 수는 3회입니다. questionCount는 완료한 사용자 질문 수이며,
                     remainingQuestionCount는 maxQuestionCount(3)에서 questionCount를 뺀 값입니다.

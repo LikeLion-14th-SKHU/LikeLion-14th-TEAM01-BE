@@ -36,4 +36,8 @@ public class ConversationCommandService {
                 answer
         );
     }
+
+    public ConversationResponse completeEarly(Long memberId, CharacterType characterType) {
+        return transactionService.completeEarly(memberId, characterType);
+    }
 }

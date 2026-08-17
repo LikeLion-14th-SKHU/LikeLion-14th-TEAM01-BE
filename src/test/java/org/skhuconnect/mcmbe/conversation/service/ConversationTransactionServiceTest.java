@@ -112,4 +112,21 @@ class ConversationTransactionServiceTest {
         verify(messageRepository, never()).saveAll(org.mockito.ArgumentMatchers.anyList());
         assertThat(conversation.getQuestionCount()).isEqualTo(Conversation.MAX_QUESTION_COUNT);
     }
+
+    @Test
+    void completesConversationEarlyWithoutConsumingRemainingQuestions() {
+        when(conversationRepository.findByGameProgressIdAndCharacterTypeForUpdate(
+                10L, CharacterType.FELIX
+        )).thenReturn(Optional.of(conversation));
+        when(messageRepository.findAllByConversationIdOrderBySequenceNumberAsc(11L))
+                .thenReturn(List.of());
+
+        ConversationResponse response = service.completeEarly(1L, CharacterType.FELIX);
+
+        assertThat(response.status()).isEqualTo(org.skhuconnect.mcmbe.conversation.entity.ConversationStatus.COMPLETED);
+        assertThat(response.questionCount()).isZero();
+        assertThat(response.remainingQuestionCount()).isEqualTo(Conversation.MAX_QUESTION_COUNT);
+        assertThat(response.messages()).isEmpty();
+        assertThat(conversation.getCompletedAt()).isNotNull();
+    }
 }

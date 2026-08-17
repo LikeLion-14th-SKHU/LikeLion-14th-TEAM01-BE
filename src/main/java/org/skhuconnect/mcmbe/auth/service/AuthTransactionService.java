@@ -1,10 +1,13 @@
 package org.skhuconnect.mcmbe.auth.service;
 
-import org.skhuconnect.mcmbe.auth.dto.KakaoLoginResponse;
+import org.skhuconnect.mcmbe.auth.dto.KakaoLoginMemberResponse;
+import org.skhuconnect.mcmbe.auth.dto.LoginExchangeResponse;
 import org.skhuconnect.mcmbe.auth.dto.TokenResponse;
 import org.skhuconnect.mcmbe.auth.jwt.JwtTokenProvider;
 import org.skhuconnect.mcmbe.auth.kakao.KakaoUserResponse;
+import org.skhuconnect.mcmbe.auth.token.entity.LoginCode;
 import org.skhuconnect.mcmbe.auth.token.entity.RefreshToken;
+import org.skhuconnect.mcmbe.auth.token.repository.LoginCodeRepository;
 import org.skhuconnect.mcmbe.auth.token.repository.RefreshTokenRepository;
 import org.skhuconnect.mcmbe.common.exception.BusinessException;
 import org.skhuconnect.mcmbe.common.exception.ErrorCode;
@@ -17,27 +20,36 @@ import org.springframework.transaction.annotation.Transactional;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.HexFormat;
 
 @Service
 public class AuthTransactionService {
 
+    private static final long LOGIN_CODE_EXPIRATION_SECONDS = 60;
+
     private final MemberRepository memberRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final LoginCodeRepository loginCodeRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final SecureRandom secureRandom = new SecureRandom();
 
     public AuthTransactionService(
             MemberRepository memberRepository,
             RefreshTokenRepository refreshTokenRepository,
+            LoginCodeRepository loginCodeRepository,
             JwtTokenProvider jwtTokenProvider
     ) {
         this.memberRepository = memberRepository;
         this.refreshTokenRepository = refreshTokenRepository;
+        this.loginCodeRepository = loginCodeRepository;
         this.jwtTokenProvider = jwtTokenProvider;
     }
 
     @Transactional
-    public KakaoLoginResponse completeKakaoLogin(KakaoUserResponse kakaoUser) {
+    public KakaoLoginMemberResponse completeKakaoLogin(KakaoUserResponse kakaoUser) {
         String providerId = kakaoUser.id().toString();
         Member member = memberRepository
                 .findByProviderAndProviderId(AuthProvider.KAKAO, providerId)
@@ -55,9 +67,44 @@ public class AuthTransactionService {
             member.updateProfile(kakaoUser.email(), kakaoUser.nickname(), kakaoUser.profileImageUrl());
         }
 
+        return new KakaoLoginMemberResponse(member.getId(), newMember);
+    }
+
+    @Transactional
+    public String issueLoginCode(Long memberId, boolean newMember) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+        loginCodeRepository.deleteAllByMemberId(memberId);
+
+        String code = generateLoginCode();
+        loginCodeRepository.save(LoginCode.issue(
+                member,
+                hash(code),
+                newMember,
+                LocalDateTime.now().plusSeconds(LOGIN_CODE_EXPIRATION_SECONDS)
+        ));
+        return code;
+    }
+
+    @Transactional
+    public LoginExchangeResponse exchangeLoginCode(String code) {
+        LocalDateTime now = LocalDateTime.now();
+        LoginCode loginCode = loginCodeRepository.findByCodeHashForUpdate(hash(code))
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_LOGIN_CODE));
+        if (!loginCode.isUsable(now)) {
+            throw new BusinessException(ErrorCode.INVALID_LOGIN_CODE);
+        }
+
+        loginCode.consume(now);
+        Member member = loginCode.getMember();
         TokenResponse tokens = jwtTokenProvider.issueTokens(member);
         saveOrRotate(member, tokens.refreshToken());
-        return new KakaoLoginResponse(member.getId(), newMember, member.getNickname(), tokens);
+        return new LoginExchangeResponse(
+                member.getId(),
+                loginCode.isNewMember(),
+                member.getNickname(),
+                tokens
+        );
     }
 
     @Transactional
@@ -104,5 +151,11 @@ public class AuthTransactionService {
         } catch (NoSuchAlgorithmException exception) {
             throw new IllegalStateException("SHA-256 알고리즘을 사용할 수 없습니다.", exception);
         }
+    }
+
+    private String generateLoginCode() {
+        byte[] randomBytes = new byte[32];
+        secureRandom.nextBytes(randomBytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
     }
 }

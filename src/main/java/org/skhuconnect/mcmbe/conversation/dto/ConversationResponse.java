@@ -20,7 +20,7 @@ public record ConversationResponse(
 
         @Schema(
                 description = "캐릭터별 대화 상태. NOT_STARTED: 질문 전, IN_PROGRESS: 1~2회 질문 완료, "
-                        + "COMPLETED: 3회 질문과 답변 저장 완료",
+                        + "COMPLETED: 3회 질문 완료 또는 조기 종료",
                 allowableValues = {"NOT_STARTED", "IN_PROGRESS", "COMPLETED"},
                 example = "NOT_STARTED"
         )
@@ -38,7 +38,7 @@ public record ConversationResponse(
         @Schema(description = "대화 시작 시각. 질문 전에는 null입니다.", nullable = true)
         LocalDateTime startedAt,
 
-        @Schema(description = "3회 질문 완료 시각. 완료 전에는 null입니다.", nullable = true)
+        @Schema(description = "3회 질문 완료 또는 조기 종료 시각. 완료 전에는 null입니다.", nullable = true)
         LocalDateTime completedAt,
 
         @Schema(description = "sequenceNumber 오름차순으로 정렬된 사용자 질문과 캐릭터 답변")

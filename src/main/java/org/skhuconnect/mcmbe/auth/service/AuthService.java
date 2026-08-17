@@ -1,6 +1,7 @@
 package org.skhuconnect.mcmbe.auth.service;
 
-import org.skhuconnect.mcmbe.auth.dto.KakaoLoginResponse;
+import org.skhuconnect.mcmbe.auth.dto.KakaoLoginMemberResponse;
+import org.skhuconnect.mcmbe.auth.dto.LoginExchangeResponse;
 import org.skhuconnect.mcmbe.auth.dto.TokenResponse;
 import org.skhuconnect.mcmbe.auth.jwt.JwtTokenProvider;
 import org.skhuconnect.mcmbe.auth.kakao.KakaoApiClient;
@@ -28,10 +29,15 @@ public class AuthService {
         return kakaoApiClient.buildAuthorizationUrl(jwtTokenProvider.createOAuthState());
     }
 
-    public KakaoLoginResponse loginWithKakao(String authorizationCode, String state) {
+    public String loginWithKakao(String authorizationCode, String state) {
         jwtTokenProvider.validateOAuthState(state);
         KakaoUserResponse kakaoUser = kakaoApiClient.getUser(authorizationCode);
-        return authTransactionService.completeKakaoLogin(kakaoUser);
+        KakaoLoginMemberResponse login = authTransactionService.completeKakaoLogin(kakaoUser);
+        return authTransactionService.issueLoginCode(login.memberId(), login.newMember());
+    }
+
+    public LoginExchangeResponse exchangeLoginCode(String code) {
+        return authTransactionService.exchangeLoginCode(code);
     }
 
     public TokenResponse refresh(String refreshToken) {

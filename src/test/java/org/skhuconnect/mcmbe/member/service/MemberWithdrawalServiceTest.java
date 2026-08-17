@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 import org.skhuconnect.mcmbe.auth.token.repository.RefreshTokenRepository;
+import org.skhuconnect.mcmbe.auth.token.repository.LoginCodeRepository;
 import org.skhuconnect.mcmbe.common.exception.BusinessException;
 import org.skhuconnect.mcmbe.common.exception.ErrorCode;
 import org.skhuconnect.mcmbe.conversation.repository.ConversationMessageRepository;
@@ -27,6 +28,7 @@ class MemberWithdrawalServiceTest {
 
     private MemberRepository memberRepository;
     private RefreshTokenRepository refreshTokenRepository;
+    private LoginCodeRepository loginCodeRepository;
     private GameProgressRepository gameProgressRepository;
     private ConversationRepository conversationRepository;
     private ConversationMessageRepository conversationMessageRepository;
@@ -37,6 +39,7 @@ class MemberWithdrawalServiceTest {
     void setUp() {
         memberRepository = mock(MemberRepository.class);
         refreshTokenRepository = mock(RefreshTokenRepository.class);
+        loginCodeRepository = mock(LoginCodeRepository.class);
         gameProgressRepository = mock(GameProgressRepository.class);
         conversationRepository = mock(ConversationRepository.class);
         conversationMessageRepository = mock(ConversationMessageRepository.class);
@@ -44,6 +47,7 @@ class MemberWithdrawalServiceTest {
         service = new MemberWithdrawalService(
                 memberRepository,
                 refreshTokenRepository,
+                loginCodeRepository,
                 gameProgressRepository,
                 conversationRepository,
                 conversationMessageRepository,
@@ -65,7 +69,8 @@ class MemberWithdrawalServiceTest {
                 conversationRepository,
                 gameProgressRepository,
                 designerPassRepository,
-                refreshTokenRepository
+                refreshTokenRepository,
+                loginCodeRepository
         );
         order.verify(memberRepository).findByIdForUpdate(7L);
         order.verify(conversationMessageRepository).deleteAllByMemberId(7L);
@@ -73,6 +78,7 @@ class MemberWithdrawalServiceTest {
         order.verify(gameProgressRepository).deleteByMemberId(7L);
         order.verify(designerPassRepository).deleteByMemberId(7L);
         order.verify(refreshTokenRepository).deleteByMemberId(7L);
+        order.verify(loginCodeRepository).deleteAllByMemberId(7L);
         order.verify(memberRepository).delete(member);
 
         verify(gameProgressRepository, never()).deleteByMemberId(8L);

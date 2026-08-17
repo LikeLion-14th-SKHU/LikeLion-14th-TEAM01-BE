@@ -3,6 +3,8 @@ package org.skhuconnect.mcmbe.member.service;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.skhuconnect.mcmbe.auth.token.entity.RefreshToken;
+import org.skhuconnect.mcmbe.auth.token.entity.LoginCode;
+import org.skhuconnect.mcmbe.auth.token.repository.LoginCodeRepository;
 import org.skhuconnect.mcmbe.auth.token.repository.RefreshTokenRepository;
 import org.skhuconnect.mcmbe.conversation.entity.CharacterType;
 import org.skhuconnect.mcmbe.conversation.entity.Conversation;
@@ -36,6 +38,8 @@ class MemberWithdrawalIntegrationTest {
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
     @Autowired
+    private LoginCodeRepository loginCodeRepository;
+    @Autowired
     private GameProgressRepository gameProgressRepository;
     @Autowired
     private ConversationRepository conversationRepository;
@@ -65,6 +69,9 @@ class MemberWithdrawalIntegrationTest {
         RefreshToken refreshToken = refreshTokenRepository.save(
                 RefreshToken.issue(target, "a".repeat(64))
         );
+        LoginCode loginCode = loginCodeRepository.save(
+                LoginCode.issue(target, "b".repeat(64), false, LocalDateTime.now().plusMinutes(1))
+        );
         entityManager.flush();
 
         Long targetId = target.getId();
@@ -74,6 +81,7 @@ class MemberWithdrawalIntegrationTest {
         Long messageId = message.getId();
         Long designerPassId = designerPass.getId();
         Long refreshTokenId = refreshToken.getId();
+        Long loginCodeId = loginCode.getId();
         entityManager.clear();
 
         service.withdraw(targetId);
@@ -86,6 +94,7 @@ class MemberWithdrawalIntegrationTest {
         assertThat(conversationMessageRepository.existsById(messageId)).isFalse();
         assertThat(designerPassRepository.existsById(designerPassId)).isFalse();
         assertThat(refreshTokenRepository.existsById(refreshTokenId)).isFalse();
+        assertThat(loginCodeRepository.existsById(loginCodeId)).isFalse();
         assertThat(memberRepository.existsById(otherId)).isTrue();
     }
 }

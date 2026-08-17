@@ -1,6 +1,7 @@
 package org.skhuconnect.mcmbe.member.service;
 
 import org.skhuconnect.mcmbe.auth.token.repository.RefreshTokenRepository;
+import org.skhuconnect.mcmbe.auth.token.repository.LoginCodeRepository;
 import org.skhuconnect.mcmbe.common.exception.BusinessException;
 import org.skhuconnect.mcmbe.common.exception.ErrorCode;
 import org.skhuconnect.mcmbe.conversation.repository.ConversationMessageRepository;
@@ -17,6 +18,7 @@ public class MemberWithdrawalService {
 
     private final MemberRepository memberRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final LoginCodeRepository loginCodeRepository;
     private final GameProgressRepository gameProgressRepository;
     private final ConversationRepository conversationRepository;
     private final ConversationMessageRepository conversationMessageRepository;
@@ -25,6 +27,7 @@ public class MemberWithdrawalService {
     public MemberWithdrawalService(
             MemberRepository memberRepository,
             RefreshTokenRepository refreshTokenRepository,
+            LoginCodeRepository loginCodeRepository,
             GameProgressRepository gameProgressRepository,
             ConversationRepository conversationRepository,
             ConversationMessageRepository conversationMessageRepository,
@@ -32,6 +35,7 @@ public class MemberWithdrawalService {
     ) {
         this.memberRepository = memberRepository;
         this.refreshTokenRepository = refreshTokenRepository;
+        this.loginCodeRepository = loginCodeRepository;
         this.gameProgressRepository = gameProgressRepository;
         this.conversationRepository = conversationRepository;
         this.conversationMessageRepository = conversationMessageRepository;
@@ -48,6 +52,7 @@ public class MemberWithdrawalService {
         gameProgressRepository.deleteByMemberId(memberId);
         designerPassRepository.deleteByMemberId(memberId);
         refreshTokenRepository.deleteByMemberId(memberId);
+        loginCodeRepository.deleteAllByMemberId(memberId);
         memberRepository.delete(member);
     }
 }
