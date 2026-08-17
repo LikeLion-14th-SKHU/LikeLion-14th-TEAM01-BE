@@ -27,6 +27,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.mockito.ArgumentCaptor;
 
 class AuthTransactionServiceTest {
 
@@ -147,6 +148,42 @@ class AuthTransactionServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.INVALID_LOGIN_CODE);
+    }
+
+    @Test
+    void rejectsExpiredAndUnknownLoginCodes() {
+        LoginCode expired = LoginCode.issue(
+                member,
+                hash("expired-code"),
+                false,
+                java.time.LocalDateTime.now().minusSeconds(1)
+        );
+        when(loginCodeRepository.findByCodeHashForUpdate(hash("expired-code")))
+                .thenReturn(Optional.of(expired));
+
+        assertThatThrownBy(() -> service.exchangeLoginCode("expired-code"))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.INVALID_LOGIN_CODE);
+        assertThatThrownBy(() -> service.exchangeLoginCode("unknown-code"))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.INVALID_LOGIN_CODE);
+    }
+
+    @Test
+    void storesOnlyHashedLoginCode() {
+        when(memberRepository.findById(1L)).thenReturn(Optional.of(member));
+
+        String code = service.issueLoginCode(1L, true);
+
+        ArgumentCaptor<LoginCode> captor = ArgumentCaptor.forClass(LoginCode.class);
+        verify(loginCodeRepository).save(captor.capture());
+        assertThat(code).isNotBlank();
+        assertThat(captor.getValue().getCodeHash())
+                .hasSize(64)
+                .isEqualTo(hash(code))
+                .isNotEqualTo(code);
     }
 
     private JwtTokenProvider tokenProvider(long accessExpiration, long refreshExpiration) {

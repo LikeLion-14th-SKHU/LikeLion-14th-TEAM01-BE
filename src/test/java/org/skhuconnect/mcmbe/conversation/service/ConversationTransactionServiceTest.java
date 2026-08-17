@@ -129,4 +129,25 @@ class ConversationTransactionServiceTest {
         assertThat(response.messages()).isEmpty();
         assertThat(conversation.getCompletedAt()).isNotNull();
     }
+
+    @Test
+    void keepsQuestionCountAndBlocksFurtherQuestionsAfterEarlyCompletion() {
+        conversation.recordCompletedQuestion();
+        conversation.recordCompletedQuestion();
+        when(conversationRepository.findByGameProgressIdAndCharacterTypeForUpdate(
+                10L, CharacterType.FELIX
+        )).thenReturn(Optional.of(conversation));
+        when(messageRepository.findAllByConversationIdOrderBySequenceNumberAsc(11L))
+                .thenReturn(List.of());
+
+        service.completeEarly(1L, CharacterType.FELIX);
+        service.completeEarly(1L, CharacterType.FELIX);
+
+        assertThat(conversation.getQuestionCount()).isEqualTo(2);
+        assertThat(conversation.getRemainingQuestionCount()).isEqualTo(1);
+        assertThatThrownBy(() -> service.prepare(1L, CharacterType.FELIX))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.QUESTION_LIMIT_EXCEEDED);
+    }
 }
