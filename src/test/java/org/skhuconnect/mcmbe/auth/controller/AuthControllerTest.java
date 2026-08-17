@@ -76,4 +76,18 @@ class AuthControllerTest {
         assertThat(response.getBody().data().refreshTokenExpiresIn()).isPositive();
         verify(authService).refresh("stored-refresh-token");
     }
+
+    @Test
+    void logoutRevokesAuthenticatedMembersRefreshToken() {
+        AuthService authService = mock(AuthService.class);
+
+        ResponseEntity<Void> response = new AuthController(authService)
+                .logout(new org.skhuconnect.mcmbe.auth.jwt.AuthenticatedMember(
+                        7L,
+                        org.skhuconnect.mcmbe.member.entity.MemberRole.USER
+                ));
+
+        assertThat(response.getStatusCode().value()).isEqualTo(204);
+        verify(authService).logout(7L);
+    }
 }

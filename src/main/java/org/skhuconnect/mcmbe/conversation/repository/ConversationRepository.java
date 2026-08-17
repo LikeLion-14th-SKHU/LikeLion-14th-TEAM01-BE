@@ -6,6 +6,7 @@ import org.skhuconnect.mcmbe.conversation.entity.Conversation;
 import org.skhuconnect.mcmbe.conversation.entity.ConversationStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -32,4 +33,8 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
             @Param("gameProgressId") Long gameProgressId,
             @Param("characterType") CharacterType characterType
     );
+
+    @Modifying
+    @Query("delete from Conversation conversation where conversation.gameProgress.member.id = :memberId")
+    int deleteAllByMemberId(@Param("memberId") Long memberId);
 }

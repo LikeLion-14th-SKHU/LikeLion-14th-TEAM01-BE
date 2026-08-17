@@ -13,6 +13,8 @@ public interface GameProgressRepository extends JpaRepository<GameProgress, Long
 
     Optional<GameProgress> findByMemberId(Long memberId);
 
+    long deleteByMemberId(Long memberId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select gameProgress from GameProgress gameProgress where gameProgress.member.id = :memberId")
     Optional<GameProgress> findByMemberIdForUpdate(@Param("memberId") Long memberId);

@@ -8,10 +8,12 @@ import jakarta.validation.constraints.NotBlank;
 import org.skhuconnect.mcmbe.auth.dto.KakaoLoginResponse;
 import org.skhuconnect.mcmbe.auth.dto.RefreshTokenRequest;
 import org.skhuconnect.mcmbe.auth.dto.TokenResponse;
+import org.skhuconnect.mcmbe.auth.jwt.AuthenticatedMember;
 import org.skhuconnect.mcmbe.auth.service.AuthService;
 import org.skhuconnect.mcmbe.common.exception.SuccessCode;
 import org.skhuconnect.mcmbe.common.response.ApiResTemplate;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -98,5 +100,20 @@ public class AuthController {
                 SuccessCode.OK,
                 authService.refresh(request.refreshToken())
         ));
+    }
+
+    @Operation(
+            summary = "로그아웃",
+            description = "로그인 사용자의 서버 저장 Refresh Token을 폐기합니다. "
+                    + "현재 Access Token은 만료 전까지 클라이언트에서도 함께 삭제해야 합니다."
+    )
+    @ApiResponse(responseCode = "204", description = "로그아웃 성공")
+    @ApiResponse(responseCode = "401", description = "Access Token이 없거나 유효하지 않음")
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(
+            @AuthenticationPrincipal AuthenticatedMember authenticatedMember
+    ) {
+        authService.logout(authenticatedMember.memberId());
+        return ResponseEntity.noContent().build();
     }
 }

@@ -9,5 +9,7 @@ public interface DesignerPassRepository extends JpaRepository<DesignerPass, Long
 
     Optional<DesignerPass> findByMemberId(Long memberId);
 
+    long deleteByMemberId(Long memberId);
+
     boolean existsByPassCode(String passCode);
 }

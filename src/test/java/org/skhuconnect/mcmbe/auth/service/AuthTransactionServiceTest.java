@@ -113,6 +113,13 @@ class AuthTransactionServiceTest {
                 .isEqualTo(ErrorCode.EXPIRED_TOKEN);
     }
 
+    @Test
+    void logoutDeletesStoredRefreshTokenForAuthenticatedMember() {
+        service.logout(1L);
+
+        verify(refreshTokenRepository).deleteByMemberId(1L);
+    }
+
     private JwtTokenProvider tokenProvider(long accessExpiration, long refreshExpiration) {
         return new JwtTokenProvider(new AuthProperties(
                 new AuthProperties.Kakao("client", "", "http://localhost/callback"),
