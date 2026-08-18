@@ -18,6 +18,7 @@ import org.skhuconnect.mcmbe.game.repository.GameProgressRepository;
 import org.skhuconnect.mcmbe.member.entity.Member;
 import org.skhuconnect.mcmbe.member.repository.MemberRepository;
 import org.skhuconnect.mcmbe.mypage.entity.DesignerPass;
+import org.skhuconnect.mcmbe.mypage.entity.DesignerPassGrade;
 import org.skhuconnect.mcmbe.mypage.repository.DesignerPassRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -64,7 +65,7 @@ class MemberWithdrawalIntegrationTest {
                 ConversationMessage.of(conversation, MessageSenderType.USER, 1, "질문")
         );
         DesignerPass designerPass = designerPassRepository.save(
-                DesignerPass.issue(target, "TEST-PASS", LocalDateTime.now())
+                DesignerPass.issue(target, "MCM-000001", LocalDateTime.now(), DesignerPassGrade.BROWN)
         );
         RefreshToken refreshToken = refreshTokenRepository.save(
                 RefreshToken.issue(target, "a".repeat(64))
