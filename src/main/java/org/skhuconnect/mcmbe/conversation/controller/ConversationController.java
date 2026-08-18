@@ -54,7 +54,8 @@ public class ConversationController {
                     1~2회 완료 후 IN_PROGRESS, 3번째 AI 답변 저장 완료 후 COMPLETED가 되며 이후 질문은 차단됩니다.
                     remainingQuestionCount는 maxQuestionCount(3) - questionCount입니다.
                     기존 메시지는 sequenceNumber 순서대로 AI 컨텍스트에 포함됩니다.
-                    recommendedQuestions는 AI 서버가 생성한 추천 질문 목록입니다. 대화 화면 최초 진입 시 선택 편의로 사용할 수 있으며 자유 질문도 가능합니다.
+                    recommendedQuestions는 최초 진입 시 AI 초기화 추천 질문을 반환하고, 사용자 질문 이후에는 AI가 생성한 다음 추천 질문으로 갱신됩니다.
+                    추천 질문 외 자유 질문도 가능하며, Conversation이 COMPLETED되면 빈 배열을 반환합니다.
                     AI 호출 실패 시 질문 횟수와 메시지는 변경되지 않아 재시도할 수 있습니다.
                     """,
             security = @SecurityRequirement(name = "bearerAuth")
@@ -126,7 +127,9 @@ public class ConversationController {
                     캐릭터별 최대 질문 수는 3회입니다. questionCount는 완료한 사용자 질문 수이며,
                     remainingQuestionCount는 maxQuestionCount(3)에서 questionCount를 뺀 값입니다.
                     messages는 USER(사용자 질문), CHARACTER(캐릭터 답변)를 sequenceNumber 오름차순으로 반환합니다.
-                    initialMessage와 recommendedQuestions는 AI 서버가 생성한 초기 증언 및 추천 질문입니다. 대화 화면 최초 진입 시 선택 편의로 사용할 수 있으며, 추천 질문 외 자유 질문도 가능합니다.
+                    initialMessage와 recommendedQuestions는 AI 서버가 생성한 초기 증언 및 추천 질문입니다.
+                    recommendedQuestions는 최초 진입 시 AI 초기화 추천 질문을 반환하고, 사용자 질문 이후에는 AI가 생성한 다음 추천 질문으로 갱신됩니다.
+                    추천 질문 외 자유 질문도 가능하며, Conversation이 COMPLETED되면 빈 배열을 반환합니다.
                     현재 사건에 속하지 않은 캐릭터는 조회할 수 없습니다.
                     """,
             security = @SecurityRequirement(name = "bearerAuth")

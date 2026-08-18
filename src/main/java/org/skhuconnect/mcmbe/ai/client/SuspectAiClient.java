@@ -6,7 +6,7 @@ public interface SuspectAiClient {
 
     SuspectAiInitialization initialize(CharacterType characterType, String aiSessionId);
 
-    String answer(
+    SuspectAiAnswer answer(
             CharacterType characterType,
             String aiSessionId,
             String question

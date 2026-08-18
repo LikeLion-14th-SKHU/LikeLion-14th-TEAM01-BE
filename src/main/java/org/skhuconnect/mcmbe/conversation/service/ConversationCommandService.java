@@ -1,6 +1,7 @@
 package org.skhuconnect.mcmbe.conversation.service;
 
 import org.skhuconnect.mcmbe.ai.client.SuspectAiClient;
+import org.skhuconnect.mcmbe.ai.client.SuspectAiAnswer;
 import org.skhuconnect.mcmbe.conversation.dto.ConversationQuestionRequest;
 import org.skhuconnect.mcmbe.conversation.dto.ConversationResponse;
 import org.skhuconnect.mcmbe.conversation.entity.CharacterType;
@@ -28,13 +29,14 @@ public class ConversationCommandService {
         String question = request.content().trim();
         ensureInitialized(memberId, characterType);
         ConversationContext context = transactionService.prepare(memberId, characterType);
-        String answer = suspectAiClient.answer(characterType, context.aiSessionId(), question);
+        SuspectAiAnswer answer = suspectAiClient.answer(characterType, context.aiSessionId(), question);
         return transactionService.saveMessages(
                 memberId,
                 characterType,
                 context.conversationId(),
                 question,
-                answer
+                answer.reply(),
+                answer.recommendedQuestion()
         );
     }
 

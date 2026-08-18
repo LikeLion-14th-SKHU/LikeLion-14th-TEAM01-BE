@@ -2,6 +2,7 @@ package org.skhuconnect.mcmbe.conversation.service;
 
 import org.junit.jupiter.api.Test;
 import org.skhuconnect.mcmbe.ai.client.SuspectAiClient;
+import org.skhuconnect.mcmbe.ai.client.SuspectAiAnswer;
 import org.skhuconnect.mcmbe.ai.client.SuspectAiInitialization;
 import org.skhuconnect.mcmbe.common.exception.BusinessException;
 import org.skhuconnect.mcmbe.common.exception.ErrorCode;
@@ -39,9 +40,9 @@ class ConversationCommandServiceTest {
         when(transactionService.prepareInitialization(1L, CharacterType.FELIX)).thenReturn(context);
         when(transactionService.prepare(1L, CharacterType.FELIX)).thenReturn(context);
         when(aiClient.answer(CharacterType.FELIX, "ai-session-id", "질문"))
-                .thenReturn("답변");
+                .thenReturn(new SuspectAiAnswer("답변", "다음 추천 질문"));
         when(transactionService.saveMessages(
-                1L, CharacterType.FELIX, 11L, "질문", "답변"
+                1L, CharacterType.FELIX, 11L, "질문", "답변", "다음 추천 질문"
         )).thenReturn(expected);
 
         ConversationResponse response = new ConversationCommandService(aiClient, transactionService)
@@ -51,7 +52,7 @@ class ConversationCommandServiceTest {
         verify(transactionService).prepare(1L, CharacterType.FELIX);
         verify(aiClient).answer(CharacterType.FELIX, "ai-session-id", "질문");
         verify(transactionService).saveMessages(
-                1L, CharacterType.FELIX, 11L, "질문", "답변"
+                1L, CharacterType.FELIX, 11L, "질문", "답변", "다음 추천 질문"
         );
     }
 
@@ -68,6 +69,7 @@ class ConversationCommandServiceTest {
         progress.selectCase(CaseType.FUNCTION);
         Conversation conversation = Conversation.create(progress, CharacterType.FELIX);
         ReflectionTestUtils.setField(conversation, "id", 11L);
+        conversation.initializeAiConversation("초기 증언", "기존 추천 질문");
         when(gameProgressRepository.findByMemberIdForUpdate(1L))
                 .thenReturn(Optional.of(progress));
         when(conversationRepository.findByGameProgressIdAndCharacterTypeForUpdate(
@@ -86,6 +88,8 @@ class ConversationCommandServiceTest {
                 .isInstanceOf(BusinessException.class);
 
         assertThat(conversation.getQuestionCount()).isZero();
+        assertThat(conversation.getRemainingQuestionCount()).isEqualTo(Conversation.MAX_QUESTION_COUNT);
+        assertThat(conversation.getRecommendedQuestion()).isEqualTo("기존 추천 질문");
         verifyNoInteractions(messageRepository);
     }
 
@@ -105,6 +109,7 @@ class ConversationCommandServiceTest {
                         Long.class,
                         CharacterType.class,
                         Long.class,
+                        String.class,
                         String.class,
                         String.class
                 )

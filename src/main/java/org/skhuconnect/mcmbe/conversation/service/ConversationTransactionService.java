@@ -83,7 +83,8 @@ public class ConversationTransactionService {
             CharacterType characterType,
             Long conversationId,
             String question,
-            String answer
+            String answer,
+            String recommendedQuestion
     ) {
         GameProgress gameProgress = findGameProgressForUpdate(memberId);
         validateAccess(gameProgress, characterType);
@@ -113,6 +114,7 @@ public class ConversationTransactionService {
                 answer
         );
         conversationMessageRepository.saveAll(List.of(userMessage, characterMessage));
+        conversation.updateRecommendedQuestion(recommendedQuestion);
         conversation.recordCompletedQuestion();
 
         List<ConversationMessage> allMessages = new ArrayList<>(existingMessages);
