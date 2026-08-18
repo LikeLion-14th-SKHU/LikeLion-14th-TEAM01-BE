@@ -18,6 +18,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 import static org.springframework.http.HttpMethod.POST;
+import static org.springframework.http.HttpMethod.GET;
 
 class AiServerSuspectClientTest {
 
@@ -63,6 +64,29 @@ class AiServerSuspectClientTest {
 
         assertThatThrownBy(() -> client.answer(CharacterType.FELIX, AI_SESSION_ID, "질문"))
                 .isInstanceOf(BusinessException.class);
+    }
+
+    @ParameterizedTest
+    @EnumSource(CharacterType.class)
+    void sendsSessionToCharacterInitializationEndpoint(CharacterType characterType) {
+        RestClient.Builder builder = RestClient.builder().baseUrl(BASE_URL);
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        AiServerSuspectClient client = new AiServerSuspectClient(
+                builder.build(),
+                new AiServerProperties(BASE_URL)
+        );
+
+        server.expect(once(), requestTo(BASE_URL + pathOf(characterType) + "/init?session_id=" + AI_SESSION_ID))
+                .andExpect(method(GET))
+                .andRespond(withSuccess("""
+                        {"reply":"초기 증언", "recommended_question":"무엇을 보았나요?"}
+                        """, MediaType.APPLICATION_JSON));
+
+        SuspectAiInitialization initialization = client.initialize(characterType, AI_SESSION_ID);
+
+        assertThat(initialization.initialMessage()).isEqualTo("초기 증언");
+        assertThat(initialization.recommendedQuestion()).isEqualTo("무엇을 보았나요?");
+        server.verify();
     }
 
     private String pathOf(CharacterType characterType) {

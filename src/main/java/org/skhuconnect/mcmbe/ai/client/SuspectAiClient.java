@@ -4,6 +4,8 @@ import org.skhuconnect.mcmbe.conversation.entity.CharacterType;
 
 public interface SuspectAiClient {
 
+    SuspectAiInitialization initialize(CharacterType characterType, String aiSessionId);
+
     String answer(
             CharacterType characterType,
             String aiSessionId,

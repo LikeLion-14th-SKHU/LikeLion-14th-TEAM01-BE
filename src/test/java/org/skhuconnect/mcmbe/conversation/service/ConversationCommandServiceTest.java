@@ -2,6 +2,7 @@ package org.skhuconnect.mcmbe.conversation.service;
 
 import org.junit.jupiter.api.Test;
 import org.skhuconnect.mcmbe.ai.client.SuspectAiClient;
+import org.skhuconnect.mcmbe.ai.client.SuspectAiInitialization;
 import org.skhuconnect.mcmbe.common.exception.BusinessException;
 import org.skhuconnect.mcmbe.common.exception.ErrorCode;
 import org.skhuconnect.mcmbe.conversation.dto.ConversationQuestionRequest;
@@ -33,8 +34,9 @@ class ConversationCommandServiceTest {
     void savesQuestionAndAnswerAfterSuccessfulAiCall() {
         SuspectAiClient aiClient = mock(SuspectAiClient.class);
         ConversationTransactionService transactionService = mock(ConversationTransactionService.class);
-        ConversationContext context = new ConversationContext(11L, "ai-session-id");
+        ConversationContext context = new ConversationContext(11L, "ai-session-id", true);
         ConversationResponse expected = ConversationResponse.notStarted(CharacterType.FELIX);
+        when(transactionService.prepareInitialization(1L, CharacterType.FELIX)).thenReturn(context);
         when(transactionService.prepare(1L, CharacterType.FELIX)).thenReturn(context);
         when(aiClient.answer(CharacterType.FELIX, "ai-session-id", "질문"))
                 .thenReturn("답변");
@@ -108,5 +110,26 @@ class ConversationCommandServiceTest {
                 )
                 .getAnnotation(Transactional.class))
                 .isNotNull();
+    }
+
+    @Test
+    void initializesOnceWithTheConversationSessionBeforeFirstQuestion() {
+        SuspectAiClient aiClient = mock(SuspectAiClient.class);
+        ConversationTransactionService transactionService = mock(ConversationTransactionService.class);
+        ConversationContext uninitialized = new ConversationContext(11L, "same-session-id", false);
+        ConversationContext initialized = new ConversationContext(11L, "same-session-id", true);
+        when(transactionService.prepareInitialization(1L, CharacterType.FELIX))
+                .thenReturn(uninitialized, initialized);
+        when(aiClient.initialize(CharacterType.FELIX, "same-session-id"))
+                .thenReturn(new SuspectAiInitialization("초기 증언", "추천 질문"));
+
+        ConversationCommandService service = new ConversationCommandService(aiClient, transactionService);
+        service.ensureInitialized(1L, CharacterType.FELIX);
+        service.ensureInitialized(1L, CharacterType.FELIX);
+
+        verify(aiClient).initialize(CharacterType.FELIX, "same-session-id");
+        verify(transactionService).saveInitialization(
+                11L, new SuspectAiInitialization("초기 증언", "추천 질문")
+        );
     }
 }

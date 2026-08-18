@@ -18,4 +18,16 @@ class ConversationTest {
         assertThatCode(() -> UUID.fromString(first.getAiSessionId()))
                 .doesNotThrowAnyException();
     }
+
+    @Test
+    void keepsTheSameAiSessionIdAfterInitialization() {
+        Conversation conversation = Conversation.create(null, CharacterType.FELIX);
+        String sessionId = conversation.getAiSessionId();
+
+        conversation.initializeAiConversation("초기 증언", "추천 질문");
+        conversation.ensureAiSessionId();
+
+        assertThat(conversation.getAiSessionId()).isEqualTo(sessionId);
+        assertThat(conversation.isAiInitialized()).isTrue();
+    }
 }

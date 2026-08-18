@@ -26,6 +26,7 @@ public class ConversationCommandService {
             ConversationQuestionRequest request
     ) {
         String question = request.content().trim();
+        ensureInitialized(memberId, characterType);
         ConversationContext context = transactionService.prepare(memberId, characterType);
         String answer = suspectAiClient.answer(characterType, context.aiSessionId(), question);
         return transactionService.saveMessages(
@@ -39,5 +40,17 @@ public class ConversationCommandService {
 
     public ConversationResponse completeEarly(Long memberId, CharacterType characterType) {
         return transactionService.completeEarly(memberId, characterType);
+    }
+
+    public void ensureInitialized(Long memberId, CharacterType characterType) {
+        ConversationContext context = transactionService.prepareInitialization(memberId, characterType);
+        if (context.aiInitialized()) {
+            return;
+        }
+
+        transactionService.saveInitialization(
+                context.conversationId(),
+                suspectAiClient.initialize(characterType, context.aiSessionId())
+        );
     }
 }

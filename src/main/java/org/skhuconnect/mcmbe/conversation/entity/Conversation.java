@@ -59,8 +59,14 @@ public class Conversation {
     @Column(name = "question_count", nullable = false)
     private int questionCount;
 
-    @Column(name = "ai_session_id", nullable = false, length = 36)
+    @Column(name = "ai_session_id", length = 36)
     private String aiSessionId;
+
+    @Column(name = "initial_message", columnDefinition = "TEXT")
+    private String initialMessage;
+
+    @Column(name = "recommended_question", columnDefinition = "TEXT")
+    private String recommendedQuestion;
 
     @Column(name = "started_at")
     private LocalDateTime startedAt;
@@ -78,6 +84,21 @@ public class Conversation {
 
     public static Conversation create(GameProgress gameProgress, CharacterType characterType) {
         return new Conversation(gameProgress, characterType);
+    }
+
+    public void ensureAiSessionId() {
+        if (aiSessionId == null) {
+            aiSessionId = UUID.randomUUID().toString();
+        }
+    }
+
+    public boolean isAiInitialized() {
+        return initialMessage != null;
+    }
+
+    public void initializeAiConversation(String initialMessage, String recommendedQuestion) {
+        this.initialMessage = initialMessage;
+        this.recommendedQuestion = recommendedQuestion;
     }
 
     public boolean canAskQuestion() {

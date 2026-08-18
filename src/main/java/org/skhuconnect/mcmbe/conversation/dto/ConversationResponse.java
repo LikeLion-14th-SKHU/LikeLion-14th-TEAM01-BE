@@ -41,6 +41,12 @@ public record ConversationResponse(
         @Schema(description = "3회 질문 완료 또는 조기 종료 시각. 완료 전에는 null입니다.", nullable = true)
         LocalDateTime completedAt,
 
+        @Schema(description = "AI 서버가 생성한 초기 증언입니다. 대화 화면 최초 진입 시 사용할 수 있습니다.", nullable = true)
+        String initialMessage,
+
+        @Schema(description = "AI 서버가 생성한 추천 질문 목록입니다. 대화 화면 최초 진입 시 선택 편의로 사용할 수 있으며, 사용자는 자유 질문도 할 수 있습니다.")
+        List<String> recommendedQuestions,
+
         @Schema(description = "sequenceNumber 오름차순으로 정렬된 사용자 질문과 캐릭터 답변")
         List<ConversationMessageResponse> messages
 ) {
@@ -54,6 +60,8 @@ public record ConversationResponse(
                 Conversation.MAX_QUESTION_COUNT,
                 null,
                 null,
+                null,
+                List.of(),
                 List.of()
         );
     }
@@ -70,6 +78,10 @@ public record ConversationResponse(
                 conversation.getRemainingQuestionCount(),
                 conversation.getStartedAt(),
                 conversation.getCompletedAt(),
+                conversation.getInitialMessage(),
+                conversation.getRecommendedQuestion() == null || conversation.getRecommendedQuestion().isBlank()
+                        ? List.of()
+                        : List.of(conversation.getRecommendedQuestion()),
                 messages.stream().map(ConversationMessageResponse::from).toList()
         );
     }
