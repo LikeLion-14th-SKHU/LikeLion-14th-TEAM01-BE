@@ -14,14 +14,14 @@ public record DesignerPassResponse(
         LocalDate issuedDate,
 
         @Schema(
-                description = "패스 디자인 색상 식별값. 기존 패스 데이터에는 null일 수 있습니다.",
+                description = "패스 디자인 색상 식별값. BROWN: Archive Brown (32%), IVORY: Ivory Atelier (32%), NAVY: München Navy (32%), GOLDEN: Golden 1976 (4%). 기존 패스 데이터에는 null일 수 있습니다.",
                 allowableValues = {"BROWN", "IVORY", "NAVY", "GOLDEN"},
                 example = "NAVY",
                 nullable = true
         )
         DesignerPassGrade grade,
 
-        @Schema(description = "사용자에게 표시할 패스 디자인명. 기존 패스 데이터에는 null일 수 있습니다.", example = "München Navy", nullable = true)
+        @Schema(description = "사용자에게 표시할 패스 디자인명. Archive Brown, Ivory Atelier, München Navy, Golden 1976 중 하나를 반환합니다. 기존 패스 데이터에는 null일 수 있습니다.", example = "München Navy", nullable = true)
         String displayName
 ) {
 
