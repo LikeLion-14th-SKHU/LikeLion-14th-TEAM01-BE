@@ -3,6 +3,7 @@ package org.skhuconnect.mcmbe.conversation.service;
 import org.skhuconnect.mcmbe.common.exception.BusinessException;
 import org.skhuconnect.mcmbe.common.exception.ErrorCode;
 import org.skhuconnect.mcmbe.conversation.dto.ConversationResponse;
+import org.skhuconnect.mcmbe.ai.client.SuspectAiInitialization;
 import org.skhuconnect.mcmbe.conversation.entity.CharacterType;
 import org.skhuconnect.mcmbe.conversation.entity.Conversation;
 import org.skhuconnect.mcmbe.conversation.entity.ConversationMessage;
@@ -45,8 +46,35 @@ public class ConversationTransactionService {
                 .orElseGet(() -> conversationRepository.save(
                         Conversation.create(gameProgress, characterType)
                 ));
+        conversation.ensureAiSessionId();
         validateCanAsk(conversation);
-        return new ConversationContext(conversation.getId(), conversation.getAiSessionId());
+        return new ConversationContext(conversation.getId(), conversation.getAiSessionId(), conversation.isAiInitialized());
+    }
+
+    @Transactional
+    public ConversationContext prepareInitialization(Long memberId, CharacterType characterType) {
+        GameProgress gameProgress = findGameProgressForUpdate(memberId);
+        validateAccess(gameProgress, characterType);
+
+        Conversation conversation = conversationRepository
+                .findByGameProgressIdAndCharacterTypeForUpdate(gameProgress.getId(), characterType)
+                .orElseGet(() -> conversationRepository.save(
+                        Conversation.create(gameProgress, characterType)
+                ));
+        conversation.ensureAiSessionId();
+        return new ConversationContext(conversation.getId(), conversation.getAiSessionId(), conversation.isAiInitialized());
+    }
+
+    @Transactional
+    public void saveInitialization(Long conversationId, SuspectAiInitialization initialization) {
+        Conversation conversation = conversationRepository.findByIdForUpdate(conversationId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.GAME_NOT_IN_PROGRESS));
+        if (!conversation.isAiInitialized()) {
+            conversation.initializeAiConversation(
+                    initialization.initialMessage(),
+                    initialization.recommendedQuestion()
+            );
+        }
     }
 
     @Transactional

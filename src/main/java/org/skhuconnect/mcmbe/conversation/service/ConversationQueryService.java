@@ -11,7 +11,6 @@ import org.skhuconnect.mcmbe.game.entity.GameProgress;
 import org.skhuconnect.mcmbe.game.entity.GameStatus;
 import org.skhuconnect.mcmbe.game.repository.GameProgressRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ConversationQueryService {
@@ -19,18 +18,20 @@ public class ConversationQueryService {
     private final GameProgressRepository gameProgressRepository;
     private final ConversationRepository conversationRepository;
     private final ConversationMessageRepository conversationMessageRepository;
+    private final ConversationCommandService conversationCommandService;
 
     public ConversationQueryService(
             GameProgressRepository gameProgressRepository,
             ConversationRepository conversationRepository,
-            ConversationMessageRepository conversationMessageRepository
+            ConversationMessageRepository conversationMessageRepository,
+            ConversationCommandService conversationCommandService
     ) {
         this.gameProgressRepository = gameProgressRepository;
         this.conversationRepository = conversationRepository;
         this.conversationMessageRepository = conversationMessageRepository;
+        this.conversationCommandService = conversationCommandService;
     }
 
-    @Transactional(readOnly = true)
     public ConversationResponse getConversation(Long memberId, CharacterType characterType) {
         GameProgress gameProgress = gameProgressRepository.findByMemberId(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.GAME_NOT_IN_PROGRESS));
@@ -48,8 +49,11 @@ public class ConversationQueryService {
                 .findByGameProgressIdAndCharacterType(gameProgress.getId(), characterType)
                 .orElse(null);
 
-        if (conversation == null) {
-            return ConversationResponse.notStarted(characterType);
+        if (conversation == null || !conversation.isAiInitialized()) {
+            conversationCommandService.ensureInitialized(memberId, characterType);
+            conversation = conversationRepository
+                    .findByGameProgressIdAndCharacterType(gameProgress.getId(), characterType)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.GAME_NOT_IN_PROGRESS));
         }
 
         return ConversationResponse.from(

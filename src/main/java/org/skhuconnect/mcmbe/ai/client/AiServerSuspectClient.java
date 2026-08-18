@@ -28,6 +28,32 @@ public class AiServerSuspectClient implements SuspectAiClient {
     }
 
     @Override
+    public SuspectAiInitialization initialize(CharacterType characterType, String aiSessionId) {
+        if (!properties.isConfigured()) {
+            throw new BusinessException(ErrorCode.AI_SERVICE_UNAVAILABLE);
+        }
+
+        try {
+            AiServerInitializationResponse response = restClient.get()
+                    .uri(CHARACTER_PATHS.get(characterType) + "/init?session_id={sessionId}", aiSessionId)
+                    .retrieve()
+                    .body(AiServerInitializationResponse.class);
+
+            if (response == null || response.reply() == null || response.reply().isBlank()) {
+                throw new BusinessException(ErrorCode.AI_SERVICE_UNAVAILABLE);
+            }
+            return new SuspectAiInitialization(
+                    response.reply().trim(),
+                    response.recommendedQuestion() == null ? null : response.recommendedQuestion().trim()
+            );
+        } catch (BusinessException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new BusinessException(ErrorCode.AI_SERVICE_UNAVAILABLE, exception);
+        }
+    }
+
+    @Override
     public String answer(CharacterType characterType, String aiSessionId, String question) {
         if (!properties.isConfigured()) {
             throw new BusinessException(ErrorCode.AI_SERVICE_UNAVAILABLE);
@@ -60,5 +86,11 @@ public class AiServerSuspectClient implements SuspectAiClient {
     }
 
     private record AiServerResponse(String reply) {
+    }
+
+    private record AiServerInitializationResponse(
+            String reply,
+            @com.fasterxml.jackson.annotation.JsonProperty("recommended_question") String recommendedQuestion
+    ) {
     }
 }
