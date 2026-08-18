@@ -29,7 +29,16 @@ public class MyPageController {
 
     @Operation(
             summary = "마이페이지 조회",
-            description = "저장된 디자이너 닉네임과 게임 완료 시 발급된 디자이너 패스를 조회합니다. 기존 완료 데이터에 패스가 없으면 최초 조회 시 보완 발급하며, 이후 동일한 패스를 반환합니다.",
+            description = """
+        저장된 디자이너 닉네임과 게임 완료 시 발급된 디자이너 패스를 조회합니다.
+        기존 완료 데이터에 패스가 없으면 최초 조회 시 보완 발급하며, 이후 동일한 패스를 반환합니다.
+
+        enum명 | 디자이너 패스 확률 등급 | 확률 
+        - BROWN: Archive Brown (32%)
+        - IVORY: Ivory Atelier (32%)
+        - NAVY: München Navy (32%)
+        - GOLDEN: Golden 1976 (4%)
+        """,
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses({
