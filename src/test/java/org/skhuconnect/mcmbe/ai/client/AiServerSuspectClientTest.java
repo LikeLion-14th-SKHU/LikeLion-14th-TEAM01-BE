@@ -17,6 +17,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.http.HttpMethod.POST;
 import static org.springframework.http.HttpMethod.GET;
 
@@ -64,6 +65,24 @@ class AiServerSuspectClientTest {
 
         assertThatThrownBy(() -> client.answer(CharacterType.FELIX, AI_SESSION_ID, "질문"))
                 .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void keepsAiServiceUnavailableResponseWhenAiServerReturnsError() {
+        RestClient.Builder builder = RestClient.builder().baseUrl(BASE_URL);
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        AiServerSuspectClient client = new AiServerSuspectClient(
+                builder.build(),
+                new AiServerProperties(BASE_URL)
+        );
+        server.expect(requestTo(BASE_URL + "/chat/felix/init?session_id=" + AI_SESSION_ID))
+                .andRespond(withStatus(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE));
+
+        assertThatThrownBy(() -> client.initialize(CharacterType.FELIX, AI_SESSION_ID))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(org.skhuconnect.mcmbe.common.exception.ErrorCode.AI_SERVICE_UNAVAILABLE);
+        server.verify();
     }
 
     @ParameterizedTest
