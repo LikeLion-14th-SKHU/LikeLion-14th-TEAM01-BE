@@ -8,26 +8,23 @@ import org.skhuconnect.mcmbe.mypage.entity.DesignerPass;
 import org.skhuconnect.mcmbe.mypage.repository.DesignerPassRepository;
 import org.springframework.stereotype.Service;
 
-import java.security.SecureRandom;
 import java.time.LocalDateTime;
 
 @Service
 public class DesignerPassIssuanceService {
 
-    private static final String PASS_PREFIX = "MCM-";
-    private static final String PASS_CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    private static final int PASS_RANDOM_LENGTH = 8;
-
     private final GameProgressRepository gameProgressRepository;
     private final DesignerPassRepository designerPassRepository;
-    private final SecureRandom secureRandom = new SecureRandom();
+    private final DesignerPassGradeSelector designerPassGradeSelector;
 
     public DesignerPassIssuanceService(
             GameProgressRepository gameProgressRepository,
-            DesignerPassRepository designerPassRepository
+            DesignerPassRepository designerPassRepository,
+            DesignerPassGradeSelector designerPassGradeSelector
     ) {
         this.gameProgressRepository = gameProgressRepository;
         this.designerPassRepository = designerPassRepository;
+        this.designerPassGradeSelector = designerPassGradeSelector;
     }
 
     public DesignerPass issueIfEligible(Member member) {
@@ -48,8 +45,9 @@ public class DesignerPassIssuanceService {
 
         return designerPassRepository.save(DesignerPass.issue(
                 member,
-                generateUniquePassCode(),
-                LocalDateTime.now()
+                generatePassCode(member.getId()),
+                LocalDateTime.now(),
+                designerPassGradeSelector.select()
         ));
     }
 
@@ -60,17 +58,7 @@ public class DesignerPassIssuanceService {
                 && gameProgress.getStatus() == GameStatus.COMPLETED;
     }
 
-    private String generateUniquePassCode() {
-        String passCode;
-        do {
-            StringBuilder randomPart = new StringBuilder(PASS_RANDOM_LENGTH);
-            for (int index = 0; index < PASS_RANDOM_LENGTH; index++) {
-                randomPart.append(PASS_CHARACTERS.charAt(
-                        secureRandom.nextInt(PASS_CHARACTERS.length())
-                ));
-            }
-            passCode = PASS_PREFIX + randomPart;
-        } while (designerPassRepository.existsByPassCode(passCode));
-        return passCode;
+    private String generatePassCode(Long memberId) {
+        return "MCM-%06d".formatted(memberId);
     }
 }

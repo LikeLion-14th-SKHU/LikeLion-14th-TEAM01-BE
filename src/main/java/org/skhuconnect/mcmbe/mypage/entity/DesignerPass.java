@@ -2,6 +2,8 @@ package org.skhuconnect.mcmbe.mypage.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -43,13 +45,23 @@ public class DesignerPass {
     @Column(name = "issued_at", nullable = false)
     private LocalDateTime issuedAt;
 
-    private DesignerPass(Member member, String passCode, LocalDateTime issuedAt) {
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private DesignerPassGrade grade;
+
+    private DesignerPass(Member member, String passCode, LocalDateTime issuedAt, DesignerPassGrade grade) {
         this.member = member;
         this.passCode = passCode;
         this.issuedAt = issuedAt;
+        this.grade = grade;
     }
 
-    public static DesignerPass issue(Member member, String passCode, LocalDateTime issuedAt) {
-        return new DesignerPass(member, passCode, issuedAt);
+    public static DesignerPass issue(
+            Member member,
+            String passCode,
+            LocalDateTime issuedAt,
+            DesignerPassGrade grade
+    ) {
+        return new DesignerPass(member, passCode, issuedAt, grade);
     }
 }
