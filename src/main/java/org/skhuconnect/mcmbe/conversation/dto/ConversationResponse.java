@@ -44,7 +44,7 @@ public record ConversationResponse(
         @Schema(description = "AI 서버가 생성한 초기 증언입니다. 대화 화면 최초 진입 시 사용할 수 있습니다.", nullable = true)
         String initialMessage,
 
-        @Schema(description = "AI 서버가 생성한 추천 질문 목록입니다. 대화 화면 최초 진입 시 선택 편의로 사용할 수 있으며, 사용자는 자유 질문도 할 수 있습니다.")
+        @Schema(description = "AI 서버가 생성한 추천 질문 목록입니다. 최초 진입 시 AI 초기화 추천 질문을 반환하고, 사용자 질문 이후에는 AI가 생성한 다음 추천 질문으로 갱신됩니다. 추천 질문 외 자유 질문도 가능하며, Conversation이 COMPLETED되면 빈 배열을 반환합니다.")
         List<String> recommendedQuestions,
 
         @Schema(description = "sequenceNumber 오름차순으로 정렬된 사용자 질문과 캐릭터 답변")
@@ -79,7 +79,9 @@ public record ConversationResponse(
                 conversation.getStartedAt(),
                 conversation.getCompletedAt(),
                 conversation.getInitialMessage(),
-                conversation.getRecommendedQuestion() == null || conversation.getRecommendedQuestion().isBlank()
+                conversation.getStatus() == ConversationStatus.COMPLETED
+                        || conversation.getRecommendedQuestion() == null
+                        || conversation.getRecommendedQuestion().isBlank()
                         ? List.of()
                         : List.of(conversation.getRecommendedQuestion()),
                 messages.stream().map(ConversationMessageResponse::from).toList()

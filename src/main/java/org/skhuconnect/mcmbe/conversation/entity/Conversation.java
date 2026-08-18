@@ -101,6 +101,10 @@ public class Conversation {
         this.recommendedQuestion = recommendedQuestion;
     }
 
+    public void updateRecommendedQuestion(String recommendedQuestion) {
+        this.recommendedQuestion = recommendedQuestion;
+    }
+
     public boolean canAskQuestion() {
         return status != ConversationStatus.COMPLETED
                 && questionCount < MAX_QUESTION_COUNT;

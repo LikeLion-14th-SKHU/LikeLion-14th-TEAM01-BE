@@ -9,6 +9,7 @@ import org.skhuconnect.mcmbe.conversation.dto.ConversationResponse;
 import org.skhuconnect.mcmbe.conversation.entity.CharacterType;
 import org.skhuconnect.mcmbe.conversation.entity.Conversation;
 import org.skhuconnect.mcmbe.conversation.entity.ConversationMessage;
+import org.skhuconnect.mcmbe.conversation.entity.ConversationStatus;
 import org.skhuconnect.mcmbe.conversation.entity.MessageSenderType;
 import org.skhuconnect.mcmbe.conversation.repository.ConversationMessageRepository;
 import org.skhuconnect.mcmbe.conversation.repository.ConversationRepository;
@@ -79,7 +80,8 @@ class ConversationTransactionServiceTest {
                 CharacterType.FELIX,
                 11L,
                 "새 질문",
-                "새 답변"
+                "새 답변",
+                "새 추천 질문"
         );
 
         @SuppressWarnings("unchecked")
@@ -89,7 +91,66 @@ class ConversationTransactionServiceTest {
                 .extracting(ConversationMessage::getSequenceNumber)
                 .containsExactly(9, 10);
         assertThat(response.questionCount()).isEqualTo(1);
+        assertThat(response.remainingQuestionCount()).isEqualTo(Conversation.MAX_QUESTION_COUNT - 1);
+        assertThat(response.recommendedQuestions()).containsExactly("새 추천 질문");
         assertThat(response.messages()).hasSize(3);
+    }
+
+    @Test
+    void updatesRecommendedQuestionWithLatestSuccessfulAiAnswer() {
+        conversation.initializeAiConversation("초기 증언", "초기 추천 질문");
+        String aiSessionId = conversation.getAiSessionId();
+        when(messageRepository.findAllByConversationIdOrderBySequenceNumberAsc(11L))
+                .thenReturn(List.of());
+
+        ConversationResponse firstResponse = service.saveMessages(
+                1L,
+                CharacterType.FELIX,
+                11L,
+                "첫 질문",
+                "첫 답변",
+                "첫 추천 질문"
+        );
+        ConversationResponse secondResponse = service.saveMessages(
+                1L,
+                CharacterType.FELIX,
+                11L,
+                "두 번째 질문",
+                "두 번째 답변",
+                "두 번째 추천 질문"
+        );
+
+        assertThat(firstResponse.recommendedQuestions()).containsExactly("첫 추천 질문");
+        assertThat(secondResponse.recommendedQuestions()).containsExactly("두 번째 추천 질문");
+        assertThat(conversation.getRecommendedQuestion()).isEqualTo("두 번째 추천 질문");
+        assertThat(conversation.getAiSessionId()).isEqualTo(aiSessionId);
+        assertThat(conversation.getQuestionCount()).isEqualTo(2);
+        assertThat(conversation.getRemainingQuestionCount()).isEqualTo(1);
+    }
+
+    @Test
+    void returnsEmptyRecommendationsWhenThirdSuccessfulQuestionCompletesConversation() {
+        conversation.initializeAiConversation("초기 증언", "두 번째 추천 질문");
+        conversation.recordCompletedQuestion();
+        conversation.recordCompletedQuestion();
+        when(messageRepository.findAllByConversationIdOrderBySequenceNumberAsc(11L))
+                .thenReturn(List.of());
+
+        ConversationResponse response = service.saveMessages(
+                1L,
+                CharacterType.FELIX,
+                11L,
+                "세 번째 질문",
+                "세 번째 답변",
+                "마지막 추천 질문"
+        );
+
+        assertThat(response.status()).isEqualTo(ConversationStatus.COMPLETED);
+        assertThat(response.questionCount()).isEqualTo(Conversation.MAX_QUESTION_COUNT);
+        assertThat(response.remainingQuestionCount()).isZero();
+        assertThat(response.recommendedQuestions()).isEmpty();
+        assertThat(conversation.getRecommendedQuestion()).isEqualTo("마지막 추천 질문");
+        assertThat(response.messages()).hasSize(2);
     }
 
     @Test
@@ -103,7 +164,8 @@ class ConversationTransactionServiceTest {
                 CharacterType.FELIX,
                 11L,
                 "초과 질문",
-                "답변"
+                "답변",
+                "추천 질문"
         ))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
@@ -120,12 +182,15 @@ class ConversationTransactionServiceTest {
         )).thenReturn(Optional.of(conversation));
         when(messageRepository.findAllByConversationIdOrderBySequenceNumberAsc(11L))
                 .thenReturn(List.of());
+        conversation.initializeAiConversation("초기 증언", "추천 질문");
 
         ConversationResponse response = service.completeEarly(1L, CharacterType.FELIX);
 
         assertThat(response.status()).isEqualTo(org.skhuconnect.mcmbe.conversation.entity.ConversationStatus.COMPLETED);
         assertThat(response.questionCount()).isZero();
         assertThat(response.remainingQuestionCount()).isEqualTo(Conversation.MAX_QUESTION_COUNT);
+        assertThat(response.recommendedQuestions()).isEmpty();
+        assertThat(conversation.getRecommendedQuestion()).isEqualTo("추천 질문");
         assertThat(response.messages()).isEmpty();
         assertThat(conversation.getCompletedAt()).isNotNull();
     }

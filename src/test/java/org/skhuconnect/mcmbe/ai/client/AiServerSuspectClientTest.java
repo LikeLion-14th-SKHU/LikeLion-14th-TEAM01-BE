@@ -43,12 +43,13 @@ class AiServerSuspectClientTest {
                         {"session_id":"550e8400-e29b-41d4-a716-446655440000","message":"어디에 있었나요?"}
                         """))
                 .andRespond(withSuccess("""
-                        {"reply":"  답변입니다.  "}
+                        {"reply":"  답변입니다.  ","recommended_question":"  다음에는 무엇을 물어볼까요?  "}
                         """, MediaType.APPLICATION_JSON));
 
-        String answer = client.answer(characterType, AI_SESSION_ID, "어디에 있었나요?");
+        SuspectAiAnswer answer = client.answer(characterType, AI_SESSION_ID, "어디에 있었나요?");
 
-        assertThat(answer).isEqualTo("답변입니다.");
+        assertThat(answer.reply()).isEqualTo("답변입니다.");
+        assertThat(answer.recommendedQuestion()).isEqualTo("다음에는 무엇을 물어볼까요?");
         server.verify();
     }
 

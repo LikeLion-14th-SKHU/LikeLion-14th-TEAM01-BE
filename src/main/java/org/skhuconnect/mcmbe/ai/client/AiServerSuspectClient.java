@@ -74,7 +74,7 @@ public class AiServerSuspectClient implements SuspectAiClient {
     }
 
     @Override
-    public String answer(CharacterType characterType, String aiSessionId, String question) {
+    public SuspectAiAnswer answer(CharacterType characterType, String aiSessionId, String question) {
         String path = CHARACTER_PATHS.get(characterType);
         if (!properties.isConfigured()) {
             log.error("AI server call unavailable: method={}, path={}, reason=AI_SERVER_BASE_URL_NOT_CONFIGURED",
@@ -99,7 +99,10 @@ public class AiServerSuspectClient implements SuspectAiClient {
                         HttpMethod.POST, path);
                 throw new BusinessException(ErrorCode.AI_SERVICE_UNAVAILABLE);
             }
-            return response.reply().trim();
+            return new SuspectAiAnswer(
+                    response.reply().trim(),
+                    response.recommendedQuestion() == null ? null : response.recommendedQuestion().trim()
+            );
         } catch (BusinessException exception) {
             throw exception;
         } catch (Exception exception) {
@@ -168,7 +171,10 @@ public class AiServerSuspectClient implements SuspectAiClient {
     private record AiServerRequest(String session_id, String message) {
     }
 
-    private record AiServerResponse(String reply) {
+    private record AiServerResponse(
+            String reply,
+            @com.fasterxml.jackson.annotation.JsonProperty("recommended_question") String recommendedQuestion
+    ) {
     }
 
     private record AiServerInitializationResponse(
