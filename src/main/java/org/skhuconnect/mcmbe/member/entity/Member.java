@@ -77,7 +77,7 @@ public class Member {
     }
 
     public static Member judge(String providerId, String nickname) {
-        Member member = new Member(AuthProvider.JUDGE, providerId, null, nickname, null);
+        Member member = new Member(AuthProvider.KAKAO, providerId, null, nickname, null);
         member.setDesignerName(nickname);
         return member;
     }

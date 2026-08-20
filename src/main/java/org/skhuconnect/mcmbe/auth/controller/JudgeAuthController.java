@@ -2,6 +2,7 @@ package org.skhuconnect.mcmbe.auth.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.skhuconnect.mcmbe.auth.dto.JudgeLoginRequest;
 import org.skhuconnect.mcmbe.auth.dto.LoginExchangeResponse;
@@ -16,6 +17,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/detective/auth")
+@Tag(
+        name = "Kakao & JWT API",
+        description = "카카오 로그인 및 JWT 인증 관련 API이다."
+)
 public class JudgeAuthController {
 
     private final AuthService authService;
