@@ -72,10 +72,31 @@ class McmBeApplicationTests {
                         .value("https://mcm-api.i1000u.store"))
                 .andExpect(jsonPath("$.paths['/detective/auth/kakao/login']").exists())
                 .andExpect(jsonPath("$.paths['/detective/auth/kakao/callback']").exists())
+                .andExpect(jsonPath("$.paths['/detective/auth/judge-login'].post").exists())
                 .andExpect(jsonPath("$.paths['/detective/auth/refresh']").exists())
                 .andExpect(jsonPath("$.paths['/detective/auth/logout'].post").exists())
                 .andExpect(jsonPath("$.paths['/detective/members/me'].delete").exists())
                 .andExpect(jsonPath("$.paths['/detective/auth/kakao/authorization-url']").doesNotExist());
+    }
+
+    @Test
+    void judgeLoginIssuesTokenPairAndRejectsWrongCredentials() throws Exception {
+        mockMvc.perform(post("/detective/auth/judge-login")
+                        .contentType("application/json")
+                        .content("{\"loginId\":\"test\",\"password\":\"test\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.memberId").isNumber())
+                .andExpect(jsonPath("$.data.nickname").value("심사위원"))
+                .andExpect(jsonPath("$.data.tokens.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.data.tokens.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.data.tokens.refreshToken").isNotEmpty())
+                .andExpect(header().doesNotExist("Set-Cookie"));
+
+        mockMvc.perform(post("/detective/auth/judge-login")
+                        .contentType("application/json")
+                        .content("{\"loginId\":\"test\",\"password\":\"wrong\"}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("INVALID_JUDGE_CREDENTIALS"));
     }
 
     @Test

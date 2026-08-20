@@ -76,6 +76,12 @@ public class Member {
         return new Member(AuthProvider.KAKAO, providerId, email, nickname, profileImageUrl);
     }
 
+    public static Member judge(String providerId, String nickname) {
+        Member member = new Member(AuthProvider.JUDGE, providerId, null, nickname, null);
+        member.setDesignerName(nickname);
+        return member;
+    }
+
     public void updateProfile(String email, String nickname, String profileImageUrl) {
         this.email = email;
         this.nickname = nickname;

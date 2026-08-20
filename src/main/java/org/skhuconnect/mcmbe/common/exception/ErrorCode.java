@@ -27,6 +27,7 @@ public enum ErrorCode implements ResponseCode {
     PRODUCT_RECOMMENDATION_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT_RECOMMENDATION_NOT_FOUND", "선택한 디자인 방향의 추천 상품을 찾을 수 없습니다."),
     AI_SERVICE_UNAVAILABLE(HttpStatus.BAD_GATEWAY, "AI_SERVICE_UNAVAILABLE", "AI 응답을 생성하지 못했습니다. 잠시 후 다시 시도해 주세요."),
     KAKAO_LOGIN_FAILED(HttpStatus.BAD_GATEWAY, "KAKAO_LOGIN_FAILED", "카카오 로그인 처리에 실패했습니다."),
+    INVALID_JUDGE_CREDENTIALS(HttpStatus.UNAUTHORIZED, "INVALID_JUDGE_CREDENTIALS", "심사위원 계정 정보가 올바르지 않습니다."),
     INVALID_LOGIN_CODE(HttpStatus.UNAUTHORIZED, "INVALID_LOGIN_CODE", "유효하지 않거나 만료된 로그인 코드입니다."),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "INVALID_TOKEN", "유효하지 않은 인증 토큰입니다."),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "EXPIRED_TOKEN", "만료된 인증 토큰입니다."),

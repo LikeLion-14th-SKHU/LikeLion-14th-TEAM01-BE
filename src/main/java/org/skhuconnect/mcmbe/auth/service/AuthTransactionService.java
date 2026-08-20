@@ -29,6 +29,8 @@ import java.util.HexFormat;
 public class AuthTransactionService {
 
     private static final long LOGIN_CODE_EXPIRATION_SECONDS = 60;
+    private static final String JUDGE_PROVIDER_ID = "test";
+    private static final String JUDGE_NICKNAME = "심사위원";
 
     private final MemberRepository memberRepository;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -68,6 +70,29 @@ public class AuthTransactionService {
         }
 
         return new KakaoLoginMemberResponse(member.getId(), newMember);
+    }
+
+    @Transactional
+    public LoginExchangeResponse completeJudgeLogin() {
+        Member member = memberRepository
+                .findByProviderAndProviderId(AuthProvider.JUDGE, JUDGE_PROVIDER_ID)
+                .orElse(null);
+        boolean newMember = member == null;
+
+        if (newMember) {
+            member = memberRepository.save(Member.judge(JUDGE_PROVIDER_ID, JUDGE_NICKNAME));
+        } else if (member.getDesignerName() == null || member.getDesignerName().isBlank()) {
+            member.setDesignerName(JUDGE_NICKNAME);
+        }
+
+        TokenResponse tokens = jwtTokenProvider.issueTokens(member);
+        saveOrRotate(member, tokens.refreshToken());
+        return new LoginExchangeResponse(
+                member.getId(),
+                newMember,
+                member.getNickname(),
+                tokens
+        );
     }
 
     @Transactional

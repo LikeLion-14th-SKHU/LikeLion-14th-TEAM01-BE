@@ -3,6 +3,7 @@ package org.skhuconnect.mcmbe.auth.service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.skhuconnect.mcmbe.auth.config.AuthProperties;
+import org.skhuconnect.mcmbe.auth.dto.LoginExchangeResponse;
 import org.skhuconnect.mcmbe.auth.dto.TokenResponse;
 import org.skhuconnect.mcmbe.auth.jwt.JwtTokenProvider;
 import org.skhuconnect.mcmbe.auth.token.entity.RefreshToken;
@@ -11,6 +12,7 @@ import org.skhuconnect.mcmbe.auth.token.repository.LoginCodeRepository;
 import org.skhuconnect.mcmbe.auth.token.repository.RefreshTokenRepository;
 import org.skhuconnect.mcmbe.common.exception.BusinessException;
 import org.skhuconnect.mcmbe.common.exception.ErrorCode;
+import org.skhuconnect.mcmbe.member.entity.AuthProvider;
 import org.skhuconnect.mcmbe.member.entity.Member;
 import org.skhuconnect.mcmbe.member.repository.MemberRepository;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -125,6 +127,57 @@ class AuthTransactionServiceTest {
         service.logout(1L);
 
         verify(refreshTokenRepository).deleteByMemberId(1L);
+    }
+
+    @Test
+    void createsJudgeMemberAndIssuesTokenPair() {
+        when(memberRepository.findByProviderAndProviderId(AuthProvider.JUDGE, "test"))
+                .thenReturn(Optional.empty());
+        when(memberRepository.save(org.mockito.ArgumentMatchers.any(Member.class)))
+                .thenAnswer(invocation -> {
+                    Member saved = invocation.getArgument(0);
+                    ReflectionTestUtils.setField(saved, "id", 8L);
+                    return saved;
+                });
+
+        LoginExchangeResponse response = service.completeJudgeLogin();
+
+        assertThat(response.memberId()).isEqualTo(8L);
+        assertThat(response.newMember()).isTrue();
+        assertThat(response.nickname()).isEqualTo("심사위원");
+        assertThat(response.tokens().accessToken()).isNotBlank();
+        assertThat(jwtTokenProvider.parseAccessToken(response.tokens().accessToken()).memberId())
+                .isEqualTo(8L);
+
+        ArgumentCaptor<Member> memberCaptor = ArgumentCaptor.forClass(Member.class);
+        verify(memberRepository).save(memberCaptor.capture());
+        assertThat(memberCaptor.getValue().getProvider()).isEqualTo(AuthProvider.JUDGE);
+        assertThat(memberCaptor.getValue().getProviderId()).isEqualTo("test");
+        assertThat(memberCaptor.getValue().getDesignerName()).isEqualTo("심사위원");
+
+        ArgumentCaptor<RefreshToken> tokenCaptor = ArgumentCaptor.forClass(RefreshToken.class);
+        verify(refreshTokenRepository).save(tokenCaptor.capture());
+        assertThat(tokenCaptor.getValue().getTokenHash())
+                .isEqualTo(hash(response.tokens().refreshToken()))
+                .isNotEqualTo(response.tokens().refreshToken());
+    }
+
+    @Test
+    void reusesExistingJudgeMemberAndRotatesRefreshToken() {
+        Member judge = Member.judge("test", "심사위원");
+        ReflectionTestUtils.setField(judge, "id", 8L);
+        RefreshToken stored = RefreshToken.issue(judge, hash("old-refresh-token"));
+        when(memberRepository.findByProviderAndProviderId(AuthProvider.JUDGE, "test"))
+                .thenReturn(Optional.of(judge));
+        when(refreshTokenRepository.findByMemberId(8L)).thenReturn(Optional.of(stored));
+
+        LoginExchangeResponse response = service.completeJudgeLogin();
+
+        assertThat(response.memberId()).isEqualTo(8L);
+        assertThat(response.newMember()).isFalse();
+        assertThat(response.nickname()).isEqualTo("심사위원");
+        assertThat(stored.getTokenHash()).isEqualTo(hash(response.tokens().refreshToken()));
+        verify(memberRepository, never()).save(org.mockito.ArgumentMatchers.any(Member.class));
     }
 
     @Test
