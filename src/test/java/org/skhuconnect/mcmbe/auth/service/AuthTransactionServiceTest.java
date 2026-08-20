@@ -131,7 +131,7 @@ class AuthTransactionServiceTest {
 
     @Test
     void createsJudgeMemberAndIssuesTokenPair() {
-        when(memberRepository.findByProviderAndProviderId(AuthProvider.JUDGE, "test"))
+        when(memberRepository.findByProviderAndProviderId(AuthProvider.KAKAO, "judge:test"))
                 .thenReturn(Optional.empty());
         when(memberRepository.save(org.mockito.ArgumentMatchers.any(Member.class)))
                 .thenAnswer(invocation -> {
@@ -151,8 +151,8 @@ class AuthTransactionServiceTest {
 
         ArgumentCaptor<Member> memberCaptor = ArgumentCaptor.forClass(Member.class);
         verify(memberRepository).save(memberCaptor.capture());
-        assertThat(memberCaptor.getValue().getProvider()).isEqualTo(AuthProvider.JUDGE);
-        assertThat(memberCaptor.getValue().getProviderId()).isEqualTo("test");
+        assertThat(memberCaptor.getValue().getProvider()).isEqualTo(AuthProvider.KAKAO);
+        assertThat(memberCaptor.getValue().getProviderId()).isEqualTo("judge:test");
         assertThat(memberCaptor.getValue().getDesignerName()).isEqualTo("심사위원");
 
         ArgumentCaptor<RefreshToken> tokenCaptor = ArgumentCaptor.forClass(RefreshToken.class);
@@ -164,10 +164,10 @@ class AuthTransactionServiceTest {
 
     @Test
     void reusesExistingJudgeMemberAndRotatesRefreshToken() {
-        Member judge = Member.judge("test", "심사위원");
+        Member judge = Member.judge("judge:test", "심사위원");
         ReflectionTestUtils.setField(judge, "id", 8L);
         RefreshToken stored = RefreshToken.issue(judge, hash("old-refresh-token"));
-        when(memberRepository.findByProviderAndProviderId(AuthProvider.JUDGE, "test"))
+        when(memberRepository.findByProviderAndProviderId(AuthProvider.KAKAO, "judge:test"))
                 .thenReturn(Optional.of(judge));
         when(refreshTokenRepository.findByMemberId(8L)).thenReturn(Optional.of(stored));
 

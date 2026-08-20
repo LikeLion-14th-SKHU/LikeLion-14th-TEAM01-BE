@@ -29,7 +29,7 @@ import java.util.HexFormat;
 public class AuthTransactionService {
 
     private static final long LOGIN_CODE_EXPIRATION_SECONDS = 60;
-    private static final String JUDGE_PROVIDER_ID = "test";
+    private static final String JUDGE_PROVIDER_ID = "judge:test";
     private static final String JUDGE_NICKNAME = "심사위원";
 
     private final MemberRepository memberRepository;
@@ -75,7 +75,7 @@ public class AuthTransactionService {
     @Transactional
     public LoginExchangeResponse completeJudgeLogin() {
         Member member = memberRepository
-                .findByProviderAndProviderId(AuthProvider.JUDGE, JUDGE_PROVIDER_ID)
+                .findByProviderAndProviderId(AuthProvider.KAKAO, JUDGE_PROVIDER_ID)
                 .orElse(null);
         boolean newMember = member == null;
 
