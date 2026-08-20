@@ -59,6 +59,7 @@ public class SecurityConfig {
                                 "/detective/auth/kakao/callback",
                                 "/detective/auth/exchange",
                                 "/detective/auth/judge-login",
+                                "/detective/auth/judge-login/redirect",
                                 "/detective/auth/refresh",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",

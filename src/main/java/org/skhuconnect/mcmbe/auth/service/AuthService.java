@@ -14,8 +14,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthService {
 
-    private static final String JUDGE_LOGIN_ID = "test";
-    private static final String JUDGE_PASSWORD = "test";
+    private static final String JUDGE_LOGIN_ID = "judge-mcm";
+    private static final String JUDGE_PASSWORD = "MCM1976!";
 
     private final KakaoApiClient kakaoApiClient;
     private final JwtTokenProvider jwtTokenProvider;
@@ -47,10 +47,19 @@ public class AuthService {
     }
 
     public LoginExchangeResponse loginAsJudge(JudgeLoginRequest request) {
+        validateJudgeCredentials(request);
+        return authTransactionService.completeJudgeLogin();
+    }
+
+    public String createJudgeLoginCode(JudgeLoginRequest request) {
+        validateJudgeCredentials(request);
+        return authTransactionService.issueJudgeLoginCode();
+    }
+
+    private void validateJudgeCredentials(JudgeLoginRequest request) {
         if (!JUDGE_LOGIN_ID.equals(request.loginId()) || !JUDGE_PASSWORD.equals(request.password())) {
             throw new BusinessException(ErrorCode.INVALID_JUDGE_CREDENTIALS);
         }
-        return authTransactionService.completeJudgeLogin();
     }
 
     public TokenResponse refresh(String refreshToken) {

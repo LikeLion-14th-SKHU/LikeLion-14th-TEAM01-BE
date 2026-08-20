@@ -96,6 +96,22 @@ public class AuthTransactionService {
     }
 
     @Transactional
+    public String issueJudgeLoginCode() {
+        Member member = memberRepository
+                .findByProviderAndProviderId(AuthProvider.KAKAO, JUDGE_PROVIDER_ID)
+                .orElse(null);
+        boolean newMember = member == null;
+
+        if (newMember) {
+            member = memberRepository.save(Member.judge(JUDGE_PROVIDER_ID, JUDGE_NICKNAME));
+        } else if (member.getDesignerName() == null || member.getDesignerName().isBlank()) {
+            member.setDesignerName(JUDGE_NICKNAME);
+        }
+
+        return issueLoginCode(member.getId(), newMember);
+    }
+
+    @Transactional
     public String issueLoginCode(Long memberId, boolean newMember) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));

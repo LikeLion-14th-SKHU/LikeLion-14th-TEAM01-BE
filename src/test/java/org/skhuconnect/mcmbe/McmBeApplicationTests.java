@@ -73,6 +73,7 @@ class McmBeApplicationTests {
                 .andExpect(jsonPath("$.paths['/detective/auth/kakao/login']").exists())
                 .andExpect(jsonPath("$.paths['/detective/auth/kakao/callback']").exists())
                 .andExpect(jsonPath("$.paths['/detective/auth/judge-login'].post").exists())
+                .andExpect(jsonPath("$.paths['/detective/auth/judge-login/redirect'].post").exists())
                 .andExpect(jsonPath("$.paths['/detective/auth/refresh']").exists())
                 .andExpect(jsonPath("$.paths['/detective/auth/logout'].post").exists())
                 .andExpect(jsonPath("$.paths['/detective/members/me'].delete").exists())
@@ -83,7 +84,7 @@ class McmBeApplicationTests {
     void judgeLoginIssuesTokenPairAndRejectsWrongCredentials() throws Exception {
         mockMvc.perform(post("/detective/auth/judge-login")
                         .contentType("application/json")
-                        .content("{\"loginId\":\"test\",\"password\":\"test\"}"))
+                        .content("{\"loginId\":\"judge-mcm\",\"password\":\"MCM1976!\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.memberId").isNumber())
                 .andExpect(jsonPath("$.data.nickname").value("심사위원"))
@@ -94,9 +95,22 @@ class McmBeApplicationTests {
 
         mockMvc.perform(post("/detective/auth/judge-login")
                         .contentType("application/json")
-                        .content("{\"loginId\":\"test\",\"password\":\"wrong\"}"))
+                        .content("{\"loginId\":\"judge-mcm\",\"password\":\"wrong\"}"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("INVALID_JUDGE_CREDENTIALS"));
+    }
+
+    @Test
+    void judgeLoginRedirectIssuesLoginCodeAndRedirectsToFrontendCallback() throws Exception {
+        mockMvc.perform(post("/detective/auth/judge-login/redirect")
+                        .contentType("application/x-www-form-urlencoded")
+                        .param("loginId", "judge-mcm")
+                        .param("password", "MCM1976!"))
+                .andExpect(status().isFound())
+                .andExpect(header().string("Location", containsString(
+                        "https://seongju-detective.vercel.app/auth/callback?code="
+                )))
+                .andExpect(header().doesNotExist("Set-Cookie"));
     }
 
     @Test
