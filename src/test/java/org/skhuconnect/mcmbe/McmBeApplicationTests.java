@@ -84,7 +84,7 @@ class McmBeApplicationTests {
     void judgeLoginIssuesTokenPairAndRejectsWrongCredentials() throws Exception {
         mockMvc.perform(post("/detective/auth/judge-login")
                         .contentType("application/json")
-                        .content("{\"loginId\":\"judge-mcm\",\"password\":\"MCM1976!\"}"))
+                        .content("{\"loginId\":\"test\",\"password\":\"test\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.memberId").isNumber())
                 .andExpect(jsonPath("$.data.nickname").value("심사위원"))
@@ -95,7 +95,7 @@ class McmBeApplicationTests {
 
         mockMvc.perform(post("/detective/auth/judge-login")
                         .contentType("application/json")
-                        .content("{\"loginId\":\"judge-mcm\",\"password\":\"wrong\"}"))
+                        .content("{\"loginId\":\"test\",\"password\":\"wrong\"}"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("INVALID_JUDGE_CREDENTIALS"));
     }
@@ -104,8 +104,8 @@ class McmBeApplicationTests {
     void judgeLoginRedirectIssuesLoginCodeAndRedirectsToFrontendCallback() throws Exception {
         mockMvc.perform(post("/detective/auth/judge-login/redirect")
                         .contentType("application/x-www-form-urlencoded")
-                        .param("loginId", "judge-mcm")
-                        .param("password", "MCM1976!"))
+                        .param("loginId", "test")
+                        .param("password", "test"))
                 .andExpect(status().isFound())
                 .andExpect(header().string("Location", containsString(
                         "https://seongju-detective.vercel.app/auth/callback?code="

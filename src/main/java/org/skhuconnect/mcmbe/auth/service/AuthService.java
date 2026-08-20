@@ -14,8 +14,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthService {
 
-    private static final String JUDGE_LOGIN_ID = "judge-mcm";
-    private static final String JUDGE_PASSWORD = "MCM1976!";
+    private static final String JUDGE_LOGIN_ID = "test";
+    private static final String JUDGE_PASSWORD = "test";
 
     private final KakaoApiClient kakaoApiClient;
     private final JwtTokenProvider jwtTokenProvider;

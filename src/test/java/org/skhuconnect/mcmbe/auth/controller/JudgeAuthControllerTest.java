@@ -22,7 +22,7 @@ class JudgeAuthControllerTest {
     @Test
     void logsInJudgeAccountForTokenPair() {
         AuthService authService = mock(AuthService.class);
-        JudgeLoginRequest request = new JudgeLoginRequest("judge-mcm", "MCM1976!");
+        JudgeLoginRequest request = new JudgeLoginRequest("test", "test");
         TokenResponse tokens = new TokenResponse("Bearer", "access-token", 1_800L, "refresh-token", 86_400L);
         LoginExchangeResponse expected = new LoginExchangeResponse(8L, false, "심사위원", tokens);
         when(authService.loginAsJudge(request)).thenReturn(expected);
@@ -39,7 +39,7 @@ class JudgeAuthControllerTest {
     @Test
     void redirectsJudgeLoginResultToFrontendWithOneTimeCode() {
         AuthService authService = mock(AuthService.class);
-        JudgeLoginRequest request = new JudgeLoginRequest("judge-mcm", "MCM1976!");
+        JudgeLoginRequest request = new JudgeLoginRequest("test", "test");
         when(authService.createJudgeLoginCode(request)).thenReturn("judge-login-code");
 
         ResponseEntity<Void> response = new JudgeAuthController(authService)
